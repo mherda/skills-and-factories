@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# iOS factory: wiki consistency check before a commit (installed by install.sh).
+# Blocks only when the commit itself touches the wiki and leaves it broken.
+# For code-only commits it warns, because docs catching up later is normal
+# (/docs sync). Skip once with: git commit --no-verify
+ROOT="$(git rev-parse --show-toplevel)"
+WIKI_PY="$ROOT/factory/scripts/wiki.py"
+[[ -f $WIKI_PY ]] || exit 0
+WIKI_DIR="$(sed -n 's/^WIKI_DIR="\(.*\)"/\1/p' "$ROOT/factory/config.sh" 2>/dev/null)"
+WIKI_DIR="${WIKI_DIR:-docs/wiki}"
+[[ -d "$ROOT/$WIKI_DIR" ]] || exit 0
+
+out="$(cd "$ROOT" && python3 -I "$WIKI_PY" lint 2>&1)"
+status=$?
+[[ $status -eq 0 ]] && exit 0
+
+errors="$(grep '^✗' <<<"$out")"
+if git diff --cached --name-only | grep -q "^$WIKI_DIR/"; then
+  echo "✗ Wiki check failed (this commit changes the wiki):" >&2
+  echo "$errors" >&2
+  echo "  Fix them, or commit with --no-verify to skip." >&2
+  exit 1
+fi
+echo "⚠ Wiki has $(grep -c '^✗' <<<"$errors") problem(s) (not blocking a code-only commit):" >&2
+head -5 <<<"$errors" >&2
+echo "  Run /docs sync in Claude Code to fix." >&2
+exit 0

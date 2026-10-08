@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# iOS factory: after a commit, list the wiki pages it affected (installed by install.sh).
+# Never blocks. Silent for factory job branches and merges (the documenter
+# handles those) and for commits that only touch the wiki.
+ROOT="$(git rev-parse --show-toplevel)"
+WIKI_PY="$ROOT/factory/scripts/wiki.py"
+[[ -f $WIKI_PY ]] || exit 0
+[[ "$(git branch --show-current)" == factory/* ]] && exit 0
+git rev-parse -q --verify HEAD^2 >/dev/null && exit 0   # merge commit
+WIKI_DIR="$(sed -n 's/^WIKI_DIR="\(.*\)"/\1/p' "$ROOT/factory/config.sh" 2>/dev/null)"
+WIKI_DIR="${WIKI_DIR:-docs/wiki}"
+[[ -d "$ROOT/$WIKI_DIR" ]] || exit 0
+
+changed="$(git diff-tree --no-commit-id --name-only -r HEAD | grep -v "^$WIKI_DIR/" | grep -v '^factory/')"
+[[ -z $changed ]] && exit 0
+report="$(cd "$ROOT" && python3 -I "$WIKI_PY" pages-for --commit HEAD 2>/dev/null)"
+[[ -z $report || $report == "No wiki pages affected." ]] && exit 0
+echo "📘 This commit may have made wiki pages out of date:"
+sed 's/^/   /' <<<"$report"
+echo "   Update them with /docs sync in Claude Code (or later, it tracks what's stale)."
+exit 0

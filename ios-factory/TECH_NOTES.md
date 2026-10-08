@@ -44,7 +44,10 @@ docs/wiki/               (in the app repo) the project wiki, kept by the documen
   scripts/
     jobstate.py          the only writer of job.json
     tracker.py           read-side of roadmap / issues / decisions; id claiming
-    wiki.py              wiki: pages-for, coverage, stale, lint, index
+    wiki.py              wiki: pages-for (paths/--diff/--commit/--range/--staged), coverage, stale, lint, index, verify
+  hooks/
+    pre-commit           wiki lint: blocks wiki-touching commits on errors, warns otherwise
+    post-commit          lists wiki pages a commit may have made stale (silent on factory/* and merges)
     xc.sh                build / test / run / screenshot per job
     test_summary.py      xcresult + log → markdown
     sensitive_paths.py   changed files that need iOS-specific care
@@ -299,6 +302,20 @@ restated.
 
 `/testflight` turns `shipped: unreleased` into the build, so a feature page
 says when it reached testers.
+
+**Consistency over time.** Staleness is computed rather than recorded: a page
+is stale when any file in its `code:` has a commit newer than the page's last
+commit. Three things clear it: the documenter editing the page (job, sync and
+audit modes), or `wiki.py verify <page>`, which writes
+`verified: <date> <sha>` into the frontmatter after the documenter confirms
+the page is still right. Committing that moves the page's timestamp, with no
+fake edits.
+
+The git hooks are symlinks from `.git/hooks/` (the common dir, so worktrees
+share them) into `factory/hooks/`, so `install.sh --update` updates them.
+Hooks aren't versioned, so a fresh clone needs `install.sh --update` (or
+`/docs hooks`) to link them. They never run an agent: every commit stays fast,
+and the expensive semantic check is `/docs sync`, on demand.
 
 ## 9. Onboarding (/factory-init)
 

@@ -14,6 +14,8 @@ git clone <this repo> ~/projects/skills-and-factories
 ~/projects/skills-and-factories/ios-factory/install.sh --update ~/projects/my-app   # pull in factory improvements later
 ```
 
+Both commands also link the factory's git hooks (wiki checks). Hooks aren't
+stored in git, so run `--update` once after cloning an app on a new machine.
 `--update` refreshes only factory-owned files (agents, skills, scripts,
 dashboard, templates). An app's config, roadmap, decisions, issues, releases,
 product brief and wiki are never touched.

@@ -3,8 +3,12 @@
 #
 #   ./install.sh <app repo>            first install: copies everything, never overwrites
 #   ./install.sh --update <app repo>   refresh factory-owned files (agents, skills,
-#                                      scripts, dashboard, templates); never touches the
-#                                      project's own config, trackers or product brief
+#                                      scripts, hooks, dashboard, templates); never touches
+#                                      the project's own config, trackers or product brief
+#
+# Both modes also link the wiki git hooks (factory/hooks/) into the repo, unless
+# it already has its own pre-commit/post-commit hooks. Re-run on each clone,
+# because git hooks aren't versioned.
 #
 # Then open Claude Code in the app repo and run /factory-init (first install).
 set -euo pipefail
@@ -19,7 +23,7 @@ git -C "$DEST" rev-parse --show-toplevel >/dev/null
 # Files the factory owns. Everything else under factory/ belongs to the project.
 owned() {
   case $1 in
-    .claude/agents/*|.claude/skills/*|factory/scripts/*|factory/templates/*|factory/dashboard.html|factory/issues/_TEMPLATE.md) return 0 ;;
+    .claude/agents/*|.claude/skills/*|factory/scripts/*|factory/hooks/*|factory/templates/*|factory/dashboard.html|factory/issues/_TEMPLATE.md) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -45,6 +49,23 @@ touch "$DEST/.gitignore"
 for line in "/factory/jobs/" "/build/"; do
   grep -qxF "$line" "$DEST/.gitignore" || echo "$line" >>"$DEST/.gitignore"
 done
+
+# Git hooks: symlinks into factory/hooks/, so --update keeps them current.
+if [[ -n "$(git -C "$DEST" config core.hooksPath)" ]]; then
+  echo "  ⚠ core.hooksPath is set; add factory/hooks/pre-commit and post-commit to your hooks yourself."
+else
+  HOOKS="$(cd "$DEST" && cd "$(git rev-parse --git-common-dir)" && pwd)/hooks"
+  mkdir -p "$HOOKS"
+  for h in pre-commit post-commit; do
+    target="$DEST/factory/hooks/$h"
+    if [[ -L "$HOOKS/$h" && "$(readlink "$HOOKS/$h")" == "$target" ]]; then :
+    elif [[ -e "$HOOKS/$h" ]]; then
+      echo "  ⚠ $h hook already exists. Call factory/hooks/$h from it to get wiki checks."
+    else
+      ln -s "$target" "$HOOKS/$h" && echo "  ⚓ linked git $h hook (wiki checks)"
+    fi
+  done
+fi
 
 if [[ $UPDATE == 1 ]]; then
   echo "✓ Updated $DEST: $updated refreshed, $new new, $same unchanged, $skipped project-owned left alone."

@@ -40,7 +40,9 @@ request ─► spec-writer ─► builder ─► CHECKS ─► [code, privacy, u
 | `/roadmap add / move / park / import PLAN.md / sync / open` | Shape the roadmap |
 | `/testflight` | Pre-flight checklist → upload (only after you confirm) → release notes, tag, roadmap |
 | `/docs status` | Wiki health: lint, code coverage, stale pages |
-| `/docs` | Audit the wiki against the code, and fix it on a branch |
+| `/docs sync [<commit\|range>]` | Update the wiki for code you changed yourself (stale pages, or a given commit or range) |
+| `/docs audit` | Re-check the whole wiki against the code, and fix it on a branch |
+| `/docs hooks` | Check or link the git hooks (needed on each fresh clone) |
 
 Plus a **dashboard** (`factory/dashboard.html`) with Board, Roadmap, Inbox,
 Decisions and Releases tabs and per-round screenshot galleries.
@@ -92,6 +94,16 @@ Decisions and Releases tabs and per-round screenshot galleries.
   pages carry a "For users" section and `shipped:`, which `/testflight` stamps.
   It lives in `docs/`, not `factory/`, because docs merge together with the
   code on each job branch.
+- **Keeping the wiki honest.** Factory jobs document themselves. For your own
+  commits there are two layers:
+  - **git hooks** (no AI, milliseconds, also for commits made from Xcode).
+    *pre-commit* blocks a commit that touches the wiki and leaves it broken,
+    and only warns on code-only commits. *post-commit* lists the pages the
+    commit may have made stale.
+  - **`/docs sync`** (documenter agent): updates those pages, or stamps them
+    `verified:` when they're still right. Staleness comes from git
+    timestamps (code newer than page), so nothing extra needs tracking. Run it
+    after a burst of manual work, or let the post-commit note remind you.
 
 ## Parallel features
 

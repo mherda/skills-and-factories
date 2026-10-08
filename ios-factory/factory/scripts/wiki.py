@@ -6,6 +6,9 @@ worktree:  cd <worktree> && python3 -I <factory>/scripts/wiki.py <command>
 
   wiki.py pages-for <path>...     pages whose `code:` covers any of these paths
   wiki.py pages-for --diff [ref]  same, for files changed since ref (default main)
+  wiki.py pages-for --commit <ref> | --range <a..b> | --staged
+                                  same, for one commit, a range, or what's staged
+  wiki.py verify <page>...        mark pages as checked against the code (resets "stale")
   wiki.py coverage                source files no page covers
   wiki.py stale                   pages whose code changed after the page did
   wiki.py lint                    frontmatter, links, code paths, index; exit 1 on errors
@@ -101,6 +104,12 @@ def cmd_pages_for(args):
     if args and args[0] == "--diff":
         ref = args[1] if len(args) > 1 else "main"
         paths = git("-C", ROOT, "diff", "--name-only", f"{ref}...HEAD").split()
+    elif args and args[0] == "--commit":
+        paths = git("-C", ROOT, "diff-tree", "--no-commit-id", "--name-only", "-r", args[1]).split()
+    elif args and args[0] == "--range":
+        paths = git("-C", ROOT, "diff", "--name-only", args[1]).split()
+    elif args and args[0] == "--staged":
+        paths = git("-C", ROOT, "diff", "--cached", "--name-only").split()
     else:
         paths = args
     pages = load_pages()
@@ -126,6 +135,25 @@ def cmd_coverage():
     print(f"{total - len(missing)}/{total} source files covered by a wiki page")
     for s in missing:
         print(f"  {s}")
+
+
+def cmd_verify(names):
+    """Stamp `verified: <date> <sha>` on pages the documenter checked and found right.
+    Committing that change moves the page's git timestamp past its code, so it stops
+    showing as stale without inventing edits."""
+    sha = git("-C", ROOT, "rev-parse", "--short", "HEAD").strip()
+    stamp = f"verified: {__import__('datetime').date.today().isoformat()} {sha}"
+    for name in names:
+        rel = name.split(WIKI + "/", 1)[-1]
+        path = os.path.join(WIKI_ABS, rel)
+        text = open(path).read()
+        m = re.match(r"^---\n(.*?)\n---", text, re.S)
+        if not m:
+            sys.exit(f"{name}: no frontmatter")
+        head = re.sub(r"^verified:.*\n?", "", m.group(1), flags=re.M).rstrip("\n")
+        text = f"---\n{head}\n{stamp}\n---" + text[m.end():]
+        open(path, "w").write(text)
+        print(f"{WIKI}/{rel}: {stamp}")
 
 
 def last_commit(path):
@@ -249,6 +277,8 @@ def main(argv):
         sys.exit(f"No wiki at {WIKI}/ (set WIKI_DIR in factory/config.sh, or run /factory-init)")
     if cmd == "pages-for":
         cmd_pages_for(args)
+    elif cmd == "verify":
+        cmd_verify(args)
     elif cmd == "coverage":
         cmd_coverage()
     elif cmd == "stale":
