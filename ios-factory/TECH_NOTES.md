@@ -52,6 +52,7 @@ docs/wiki/               (in the app repo) the project wiki, kept by the documen
     test_summary.py      xcresult + log → markdown
     sensitive_paths.py   changed files that need iOS-specific care
     testflight.sh        archive + upload (honours BUILD_NUMBER)
+    serve.py             dashboard server (deep connection queue, no-cache)
 ```
 
 **Skills vs agents.** Skills run in your session and talk to you: picking

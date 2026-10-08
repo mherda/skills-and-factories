@@ -313,7 +313,7 @@ Run `jobstate.py list --active` and `tracker.py inbox`. Show both, then one
 line on what the user can do next (`/issues` for questions,
 `/factory resume <job-id>` for answered jobs, `/roadmap` for the big picture).
 Point out the dashboard:
-`python3 -m http.server 8765 -d factory`, then
+`python3 -I factory/scripts/serve.py`, then
 <http://localhost:8765/dashboard.html>.
 
 ## Parallel jobs

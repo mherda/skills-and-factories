@@ -28,7 +28,7 @@ This skill shows the roadmap and lets the user shape it.
    what's waiting on the user (`/issues`), what's next in line, and what
    shipped in the last TestFlight build (from `factory/releases.md`).
 3. Mention once that the dashboard has a visual Roadmap tab:
-   `python3 -m http.server 8765 -d factory` →
+   `python3 -I factory/scripts/serve.py` →
    <http://localhost:8765/dashboard.html#roadmap>.
 
 ## /roadmap add [<milestone>] <item>
@@ -72,5 +72,5 @@ Show the changes and apply them with one Edit per line.
 ## /roadmap open
 
 Start the dashboard in the background
-(`python3 -m http.server 8765 -d <repo>/factory`) if port 8765 is free, and
+(`python3 -I <repo>/factory/scripts/serve.py`) if port 8765 is free, and
 give the user <http://localhost:8765/dashboard.html#roadmap>.

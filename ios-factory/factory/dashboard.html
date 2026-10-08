@@ -121,10 +121,30 @@ code { font: 12px ui-monospace, Menlo, monospace; background: var(--pend-bg); pa
 const $ = (s) => document.querySelector(s)
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
+// At most 6 requests in flight, and network errors (a dropped connection, not a
+// 404) are retried with backoff, so a burst never surfaces as "Failed to fetch".
+const MAX_INFLIGHT = 6
+let inflight = 0
+const waiting = []
+async function slot(fn) {
+  if (inflight >= MAX_INFLIGHT) await new Promise((r) => waiting.push(r))
+  inflight++
+  try { return await fn() } finally { inflight--; waiting.shift()?.() }
+}
+class HttpError extends Error {}
 async function text(url) {
-  const res = await fetch(url, { cache: 'no-store' })
-  if (!res.ok) throw new Error(`${res.status} ${url}`)
-  return res.text()
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await slot(async () => {
+        const res = await fetch(url, { cache: 'no-store' })
+        if (!res.ok) throw new HttpError(`${res.status} ${url}`)
+        return res.text()
+      })
+    } catch (err) {
+      if (err instanceof HttpError || attempt >= 3) throw err
+      await new Promise((r) => setTimeout(r, 150 * 2 ** attempt))
+    }
+  }
 }
 async function maybe(url) { try { return await text(url) } catch { return null } }
 async function listDir(dir) {
@@ -380,21 +400,32 @@ $('#main').onclick = (e) => {
 
 // ---------- loop ----------
 const tab = () => (VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'board')
-let busy = false
+let busy = false, again = false, failures = 0
 async function render() {
-  if (busy) return
+  if (busy) { again = true; return } // a tab click mid-refresh runs right after it
   busy = true
+  const shown = tab()
   try {
-    document.querySelectorAll('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.tab === tab()))
-    const html = await VIEWS[tab()]()
-    if ($('#main').dataset.html !== html) { $('#main').innerHTML = html; $('#main').dataset.html = html }
+    document.querySelectorAll('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.tab === shown))
+    const html = await VIEWS[shown]()
+    if (tab() === shown && $('#main').dataset.html !== html) { $('#main').innerHTML = html; $('#main').dataset.html = html; $('#main').dataset.tab = shown }
     const issues = await loadIssues()
     const n = issues.filter((i) => i.status === 'needs-input').length
     $('#inbox-count').hidden = !n; $('#inbox-count').textContent = n
     $('#stamp').textContent = `updated ${new Date().toLocaleTimeString()}`
+    failures = 0
   } catch (err) {
-    $('#main').innerHTML = `<p class="empty">Couldn't read the factory folder (${esc(err.message)}). Serve it with <code>python3 -m http.server 8765 -d factory</code> from the repo root.</p>`
-  } finally { busy = false }
+    failures++
+    // Keep showing the last good view of this tab; only explain once it's clearly down.
+    if ($('#main').dataset.tab !== shown || failures >= 3) {
+      $('#main').innerHTML = `<p class="empty">Can't reach the dashboard server (${esc(err.message)}). Start it from the repo root with <code>python3 -I factory/scripts/serve.py</code>. Retrying every few seconds.</p>`
+      $('#main').dataset.html = ''; $('#main').dataset.tab = ''
+    }
+    $('#stamp').textContent = `connection problem, retrying (${new Date().toLocaleTimeString()})`
+  } finally {
+    busy = false
+    if (again) { again = false; render() }
+  }
 }
 window.addEventListener('hashchange', render)
 render()
