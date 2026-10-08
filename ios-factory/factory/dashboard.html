@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iOS Factory</title>
+<style>
+:root {
+  --bg: #f5f5f7; --panel: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #e3e3e8;
+  --accent: #0a66d8; --pass: #1f8a3b; --pass-bg: #e3f4e7; --warn: #a15c00; --warn-bg: #fdf0dc;
+  --fail: #c4281c; --fail-bg: #fbe4e1; --pend: #8e8e93; --pend-bg: #efeff2; --you: #7a3cc2; --you-bg: #f0e7fb;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111113; --panel: #1c1c1f; --ink: #f2f2f5; --muted: #9a9aa2; --line: #2e2e33;
+    --accent: #4c9aff; --pass: #5fd07a; --pass-bg: #16301e; --warn: #f0a640; --warn-bg: #33260f;
+    --fail: #ff7468; --fail-bg: #3a1714; --pend: #8e8e93; --pend-bg: #26262a; --you: #c39bff; --you-bg: #2a1f3a;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px 0; }
+h1 { font-size: 17px; margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline; }
+h1 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+nav { display: flex; gap: 4px; overflow-x: auto; }
+nav a { padding: 7px 12px; border-radius: 8px 8px 0 0; color: var(--muted); text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; }
+nav a.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+nav .count { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--you-bg); color: var(--you); font-size: 11px; text-align: center; }
+main { padding: 16px; }
+.empty { color: var(--muted); padding: 24px 0; }
+/* board */
+.board { display: grid; grid-template-columns: repeat(7, minmax(190px, 1fr)); gap: 12px; overflow-x: auto; }
+.col h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; display: flex; justify-content: space-between; }
+.col.you h2 { color: var(--you); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: var(--shadow); cursor: pointer; }
+.card:hover { border-color: var(--accent); }
+.col.you .card { border-color: var(--you); }
+.card .id { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.card .feat { margin: 4px 0 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card .meta { color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.chip { font-size: 11px; padding: 1px 7px; border-radius: 9px; background: var(--pend-bg); color: var(--pend); white-space: nowrap; }
+.chip.PASS { background: var(--pass-bg); color: var(--pass); }
+.chip.CHANGES, .chip.FAIL { background: var(--fail-bg); color: var(--fail); }
+.chip.bug { background: var(--warn-bg); color: var(--warn); }
+.chip.you { background: var(--you-bg); color: var(--you); }
+/* roadmap */
+.overall { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.bar { flex: 1; height: 8px; border-radius: 4px; background: var(--pend-bg); overflow: hidden; display: flex; max-width: 520px; }
+.bar i { display: block; height: 100%; }
+.bar .d { background: var(--pass); } .bar .p { background: var(--accent); } .bar .q { background: var(--you); }
+.ms { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+.ms-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.ms h3 { margin: 0; font-size: 15px; }
+.ms .goal { color: var(--muted); margin: 2px 0 10px; }
+.ms ul { list-style: none; margin: 0; padding: 0; }
+.ms li { display: flex; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); align-items: baseline; }
+.ms li .mark { width: 18px; text-align: center; flex: none; }
+.ms li.done .text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.ms li.parked { opacity: .55; }
+.ms li .refs { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.mark.done { color: var(--pass); } .mark.doing { color: var(--accent); } .mark.needs-input { color: var(--you); font-weight: 700; } .mark.todo, .mark.parked { color: var(--pend); }
+/* lists */
+.list { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 18px; }
+.list h3 { margin: 0; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line); }
+.row { display: flex; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); cursor: pointer; align-items: baseline; }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: var(--bg); }
+.row .rid { font: 600 12px ui-monospace, Menlo, monospace; flex: none; width: 64px; }
+.row .rt { flex: 1; }
+.row .rm { color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.hint { color: var(--muted); font-size: 12px; margin: -8px 0 16px; }
+code { font: 12px ui-monospace, Menlo, monospace; background: var(--pend-bg); padding: 1px 4px; border-radius: 4px; }
+/* drawer */
+.drawer { position: fixed; inset: 0 0 0 auto; width: min(760px, 100vw); background: var(--panel); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(0,0,0,.12); transform: translateX(100%); transition: transform .18s ease; z-index: 10; display: flex; flex-direction: column; }
+.drawer.open { transform: none; }
+.drawer .dh { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.drawer .dh b { font-family: ui-monospace, Menlo, monospace; }
+.drawer button { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 4px 10px; cursor: pointer; font: inherit; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.tabs a { font-size: 12px; padding: 3px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; cursor: pointer; border: 1px solid transparent; }
+.tabs a.on { border-color: var(--line); color: var(--ink); background: var(--bg); }
+.tabs a .v { margin-left: 4px; }
+.doc { padding: 16px; overflow-y: auto; flex: 1; }
+.doc h1, .doc h2, .doc h3 { margin: 1.1em 0 .4em; } .doc h1 { font-size: 18px; } .doc h2 { font-size: 15px; } .doc h3 { font-size: 14px; }
+.doc pre { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow-x: auto; font-size: 12px; }
+.doc pre code { background: none; padding: 0; }
+.doc a { color: var(--accent); }
+.doc .first { display: inline-block; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--pend-bg); }
+.doc .first.PASS, .doc .first.READY, .doc .first.APPROVE, .doc .first.UPDATED { background: var(--pass-bg); color: var(--pass); }
+.doc .first.CHANGES, .doc .first.FAIL, .doc .first.ESCALATE, .doc .first.BLOCKED, .doc .first.NEEDS-INPUT { background: var(--fail-bg); color: var(--fail); }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.shots figure { margin: 0; }
+.shots img { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); cursor: zoom-in; }
+.shots figcaption { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; word-break: break-all; }
+.timeline { font-size: 12px; color: var(--muted); padding: 0; list-style: none; }
+.timeline li { padding: 2px 0; }
+@media (max-width: 700px) { .board { grid-template-columns: repeat(7, 78vw); } .row .rid { width: auto; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>iOS Factory <small id="stamp"></small></h1>
+  <nav id="nav">
+    <a href="#board" data-tab="board">Board</a>
+    <a href="#roadmap" data-tab="roadmap">Roadmap</a>
+    <a href="#inbox" data-tab="inbox">Inbox<span class="count" id="inbox-count" hidden></span></a>
+    <a href="#decisions" data-tab="decisions">Decisions</a>
+    <a href="#releases" data-tab="releases">Releases</a>
+  </nav>
+</header>
+<main id="main"></main>
+<aside class="drawer" id="drawer">
+  <div class="dh"><b id="d-title"></b><button id="d-close">Close</button></div>
+  <div class="tabs" id="d-tabs"></div>
+  <div class="doc" id="d-body"></div>
+</aside>
+<script>
+const $ = (s) => document.querySelector(s)
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+async function text(url) {
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`${res.status} ${url}`)
+  return res.text()
+}
+async function maybe(url) { try { return await text(url) } catch { return null } }
+async function listDir(dir) {
+  const html = await maybe(dir)
+  if (!html) return []
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  return [...doc.querySelectorAll('a')].map((a) => decodeURIComponent(a.getAttribute('href'))).filter((h) => !h.startsWith('?') && !h.startsWith('/') && h !== '../')
+}
+function ago(iso) {
+  if (!iso) return ''
+  const s = (Date.now() - new Date(iso)) / 1000
+  if (s < 60) return 'just now'
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+  return `${Math.floor(s / 86400)}d ago`
+}
+
+// ---------- tiny markdown ----------
+function inline(s) {
+  return esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\[([^\]]+)\]\(((?:https?:\/\/|\.{0,2}\/|#)[^)\s]*)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+}
+function md(src) {
+  const lines = src.replace(/<!--[\s\S]*?-->/g, '').split('\n')
+  let out = '', list = null, para = [], code = null
+  const flush = () => {
+    if (para.length) { out += `<p>${inline(para.join(' '))}</p>`; para = [] }
+    if (list) { out += `</${list}>`; list = null }
+  }
+  lines.forEach((line, i) => {
+    if (code !== null) {
+      if (line.startsWith('```')) { out += `<pre><code>${esc(code.join('\n'))}</code></pre>`; code = null } else code.push(line)
+      return
+    }
+    if (line.startsWith('```')) { flush(); code = []; return }
+    if (i === 0 && /^(STATUS|VERDICT|CHECKS|DOCS): |^(APPROVE|ESCALATE)\s*$/.test(line)) {
+      const v = line.split(':').pop().trim()
+      out += `<p><span class="first ${esc(v)}">${esc(line)}</span></p>`; return
+    }
+    let m
+    if ((m = line.match(/^(#{1,4}) (.*)/))) { flush(); out += `<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`; return }
+    if ((m = line.match(/^\s*(?:[-*]|(\d+)\.) (.*)/))) {
+      if (para.length) { out += `<p>${inline(para.join(' '))}</p>`; para = [] }
+      const t = m[1] ? 'ol' : 'ul'
+      if (list !== t) { if (list) out += `</${list}>`; out += `<${t}>`; list = t }
+      out += `<li>${inline(m[2].replace(/^\[( |x|~|\?|-)\] /, (_, c) => ({ x: '☑ ', ' ': '☐ ', '~': '◐ ', '?': '❓ ', '-': '– ' }[c])))}</li>`; return
+    }
+    if (!line.trim()) { flush(); return }
+    if (list) { out += `</${list}>`; list = null }
+    para.push(line.trim())
+  })
+  flush()
+  return out
+}
+
+// ---------- data ----------
+async function loadJobs() {
+  const dirs = (await listDir('jobs/')).filter((h) => /^\d{3}-/.test(h)).map((h) => h.replace(/\/$/, ''))
+  const jobs = await Promise.all(dirs.map(async (id) => { try { return JSON.parse(await text(`jobs/${id}/job.json`)) } catch { return null } }))
+  return jobs.filter(Boolean)
+}
+function frontmatter(src) {
+  const meta = {}
+  const m = src.match(/^---\n([\s\S]*?)\n---/)
+  if (m) for (const line of m[1].split('\n')) { const i = line.indexOf(':'); if (i > 0) meta[line.slice(0, i).trim()] = line.slice(i + 1).split(' #')[0].trim() }
+  return meta
+}
+async function loadIssues() {
+  const files = (await listDir('issues/')).filter((h) => /^ISS-\d+.*\.md$/.test(h))
+  return Promise.all(files.map(async (f) => {
+    const src = await text(`issues/${f}`)
+    const meta = frontmatter(src)
+    const qs = (src.split('## Answers')[0].match(/^### Q\d+/gm) || []).length
+    const as = ((src.split('## Answers')[1] || '').match(/^### A\d+/gm) || []).length
+    return { ...meta, file: `issues/${f}`, src, open: Math.max(0, qs - as) }
+  }))
+}
+const MARKS = { ' ': 'todo', '~': 'doing', x: 'done', '?': 'needs-input', '-': 'parked' }
+const ICON = { todo: '○', doing: '◐', done: '●', 'needs-input': '?', parked: '–' }
+function parseRoadmap(src) {
+  const ms = []; let cur = null
+  for (const line of src.replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
+    let m
+    if (line.startsWith('## ')) { cur = { title: line.slice(3), goal: '', items: [] }; ms.push(cur) }
+    else if (cur && /^goal:/i.test(line)) cur.goal = line.slice(5).trim()
+    else if (cur && (m = line.match(/^- \[(.)\] (.*)$/))) {
+      const parts = m[2].split(' · ')
+      cur.items.push({ status: MARKS[m[1]] || 'todo', text: parts[0], refs: parts.slice(1) })
+    }
+  }
+  return ms
+}
+function parseDecisions(src) {
+  const out = []; let cur = null
+  for (const line of src.replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
+    let m
+    if ((m = line.match(/^## (D-\d+) · (\S+) · (.*)$/))) { cur = { id: m[1], date: m[2], title: m[3], body: [] }; out.push(cur) }
+    else if (cur) cur.body.push(line)
+  }
+  return out.map((d) => {
+    const get = (k) => (d.body.find((l) => l.startsWith(k + ':')) || '').slice(k.length + 1).trim()
+    return { ...d, scope: get('Scope'), decision: get('Decision'), why: get('Why'), source: get('Source'), status: get('Status') || 'active' }
+  })
+}
+
+// ---------- views ----------
+const COLS = [
+  ['Spec', ['spec']], ['Build', ['build']], ['Checks', ['check']], ['Review', ['review']],
+  ['Approve · docs · merge', ['approve', 'docs', 'merge']], ['Needs you', ['needs-input']], ['Merged', ['merged']],
+]
+function chips(j) {
+  const out = []
+  if (j.kind === 'bug') out.push('<span class="chip bug">bug</span>')
+  if (j.kind === 'docs') out.push('<span class="chip">docs</span>')
+  if (j.round) out.push(`<span class="chip ${j.checks}">checks ${j.checks === 'pending' ? '…' : j.checks.toLowerCase()}</span>`)
+  if (j.stage === 'review' || j.round > 0) for (const [k, v] of Object.entries(j.reviews || {})) out.push(`<span class="chip ${v}">${k}</span>`)
+  if (j.stage === 'needs-input') out.push(`<span class="chip you">${esc(j.issue || 'waiting')} · ${esc(j.blocked_at || '')}</span>`)
+  return out.join('')
+}
+async function viewBoard() {
+  const jobs = (await loadJobs()).filter((j) => j.stage !== 'abandoned')
+  if (!jobs.length) return '<p class="empty">No jobs yet. Start one with <code>/factory &lt;feature&gt;</code> or <code>/factory next</code>.</p>'
+  return `<div class="board">${COLS.map(([title, stages]) => {
+    let js = jobs.filter((j) => stages.includes(j.stage)).sort((a, b) => (b.updated || '').localeCompare(a.updated || ''))
+    if (stages.includes('merged')) js = js.slice(0, 8)
+    return `<section class="col ${stages.includes('needs-input') ? 'you' : ''}"><h2><span>${title}</span><span>${js.length}</span></h2>
+      ${js.map((j) => `<div class="card" data-job="${esc(j.id)}">
+        <div class="id">${esc(j.id)}</div>
+        <div class="feat">${esc(j.feature)}</div>
+        <div class="chips">${chips(j)}</div>
+        <div class="meta"><span>${j.round ? `round ${j.round}` : esc(j.stage)}</span><span>${ago(j.updated)}</span></div>
+      </div>`).join('')}</section>`
+  }).join('')}</div>`
+}
+function bar(items) {
+  const live = items.filter((i) => i.status !== 'parked'), n = live.length || 1
+  const pct = (s) => (100 * live.filter((i) => i.status === s).length) / n
+  return `<div class="bar"><i class="d" style="width:${pct('done')}%"></i><i class="p" style="width:${pct('doing')}%"></i><i class="q" style="width:${pct('needs-input')}%"></i></div>`
+}
+function refChip(r) {
+  if (/^job /.test(r)) return `<span class="chip" data-job="${esc(r.slice(4))}" style="cursor:pointer">${esc(r)}</span>`
+  if (/^ISS-/.test(r)) return `<span class="chip you" data-issue="${esc(r)}" style="cursor:pointer">${esc(r)}</span>`
+  if (/^TF /.test(r)) return `<span class="chip PASS">${esc(r)}</span>`
+  return `<span class="chip">${esc(r)}</span>`
+}
+async function viewRoadmap() {
+  const src = await maybe('roadmap.md')
+  if (!src) return '<p class="empty">No <code>roadmap.md</code> yet.</p>'
+  const ms = parseRoadmap(src), all = ms.flatMap((m) => m.items)
+  const live = all.filter((i) => i.status !== 'parked'), done = live.filter((i) => i.status === 'done').length
+  return `<div class="overall">${bar(all)}<b>${done}/${live.length}</b><span class="hint" style="margin:0">● done · ◐ in progress · ? needs you · ○ to do · – parked</span></div>
+  ${ms.map((m) => {
+    const l = m.items.filter((i) => i.status !== 'parked'), d = l.filter((i) => i.status === 'done').length
+    return `<section class="ms"><div class="ms-head"><h3>${esc(m.title)}</h3><span style="display:flex;gap:10px;align-items:center;min-width:220px">${bar(m.items)}<b>${d}/${l.length}</b></span></div>
+      ${m.goal ? `<p class="goal">${esc(m.goal)}</p>` : ''}
+      <ul>${m.items.map((i) => `<li class="${i.status}"><span class="mark ${i.status}">${ICON[i.status]}</span><span class="text">${inline(i.text)}</span><span class="refs">${i.refs.map(refChip).join('')}</span></li>`).join('')}</ul></section>`
+  }).join('')}`
+}
+const ISSUE_ORDER = ['needs-input', 'answered', 'open', 'in-progress', 'done', 'wontfix']
+async function viewInbox() {
+  const issues = await loadIssues()
+  if (!issues.length) return '<p class="empty">No issues. File one with <code>/bug</code> or <code>/issues new</code>.</p>'
+  const groups = [['Needs your input', ['needs-input']], ['Answered: run /factory resume', ['answered']], ['Open', ['open']], ['In progress', ['in-progress']], ['Closed', ['done', 'wontfix']]]
+  return `<p class="hint">Answer questions in Claude Code with <code>/issues ISS-n</code>. Agents read the answers when the job resumes.</p>` + groups.map(([title, sts]) => {
+    const rows = issues.filter((i) => sts.includes(i.status)).sort((a, b) => (a.type === 'bug' ? -1 : 0) - (b.type === 'bug' ? -1 : 0) || (b.id || '').localeCompare(a.id || ''))
+    if (!rows.length) return ''
+    return `<div class="list"><h3>${title} · ${rows.length}</h3>${rows.map((i) => `<div class="row" data-issue="${esc(i.id)}">
+      <span class="rid">${esc(i.id)}</span><span class="rt">${esc(i.title)}</span>
+      <span class="rm">${i.type === 'bug' ? '<span class="chip bug">bug</span>' : `<span class="chip">${esc(i.type)}</span>`}
+      ${i.priority === 'high' ? '<span class="chip CHANGES">high</span>' : ''}
+      ${i.open ? `<span class="chip you">${i.open} question${i.open > 1 ? 's' : ''}</span>` : ''}
+      ${i.job && i.job !== 'null' ? `<span>job ${esc(i.job)}</span>` : ''}</span></div>`).join('')}</div>`
+  }).join('')
+}
+async function viewDecisions() {
+  const src = await maybe('decisions.md')
+  const ds = src ? parseDecisions(src) : []
+  if (!ds.length) return '<p class="empty">No decisions yet. Record one with <code>/decide &lt;decision&gt;</code>.</p>'
+  return `<p class="hint">Every agent reads these before it works. Reviewers flag violations, and the approver escalates conflicts.</p><div class="list">${ds.reverse().map((d) => `
+    <div class="row" style="cursor:default;${d.status.startsWith('superseded') ? 'opacity:.5' : ''}">
+      <span class="rid">${esc(d.id)}</span>
+      <span class="rt"><b>${esc(d.title)}</b><br>${inline(d.decision)}${d.why ? `<br><span style="color:var(--muted)">Why: ${inline(d.why)}</span>` : ''}</span>
+      <span class="rm"><span>${esc(d.date)}</span>${d.scope.split(',').filter(Boolean).map((s) => `<span class="chip">${esc(s.trim())}</span>`).join('')}
+      ${d.status !== 'active' ? `<span class="chip ${d.status === 'escalate' ? 'you' : ''}">${esc(d.status)}</span>` : ''}
+      ${/ISS-/.test(d.source) ? `<span class="chip you" data-issue="${esc(d.source)}" style="cursor:pointer">${esc(d.source)}</span>` : ''}</span>
+    </div>`).join('')}</div>`
+}
+async function viewReleases() {
+  const src = await maybe('releases.md')
+  return src ? `<div class="list"><div class="doc">${md(src)}</div></div>` : '<p class="empty">No <code>releases.md</code> yet.</p>'
+}
+const VIEWS = { board: viewBoard, roadmap: viewRoadmap, inbox: viewInbox, decisions: viewDecisions, releases: viewReleases }
+
+// ---------- drawer ----------
+let drawer = null // { kind, id, tab }
+async function jobTabs(id) {
+  const tabs = []
+  const top = await listDir(`jobs/${id}/`)
+  for (const f of ['spec.md', 'build.md', 'decision.md', 'docs.md'].concat(top.filter((f) => /^rework-\d+\.md$/.test(f)))) if (top.includes(f)) tabs.push({ label: f.replace('.md', ''), path: `jobs/${id}/${f}` })
+  const rounds = top.filter((f) => /^round-\d+\/$/.test(f)).sort((a, b) => parseInt(a.slice(6)) - parseInt(b.slice(6)))
+  for (const r of rounds) {
+    const n = r.slice(6, -1), files = await listDir(`jobs/${id}/${r}`)
+    for (const f of ['checks.md', 'review-code.md', 'review-privacy.md', 'review-ux.md', 'review-release.md']) if (files.includes(f)) tabs.push({ label: `r${n} ${f.replace('review-', '').replace('.md', '')}`, path: `jobs/${id}/${r}${f}` })
+    if (files.includes('shots/')) tabs.push({ label: `r${n} screens`, shots: `jobs/${id}/${r}shots/` })
+  }
+  tabs.push({ label: 'timeline', timeline: `jobs/${id}/job.json` })
+  return tabs
+}
+async function renderDrawer() {
+  if (!drawer) return
+  $('#d-title').textContent = drawer.id
+  let tabs
+  if (drawer.kind === 'job') tabs = await jobTabs(drawer.id)
+  else {
+    const issue = (await loadIssues()).find((i) => i.id === drawer.id)
+    tabs = issue ? [{ label: issue.file.split('/').pop(), path: issue.file }] : []
+  }
+  if (!tabs.length) { setBody('<p class="empty">Nothing here yet.</p>'); $('#d-tabs').innerHTML = ''; return }
+  const cur = tabs.find((t) => t.label === drawer.tab) || tabs[tabs.length > 1 && drawer.kind === 'job' ? tabs.length - 2 : 0]
+  drawer.tab = cur.label
+  const verdicts = await Promise.all(tabs.map(async (t) => {
+    if (!t.path) return ''
+    const first = ((await maybe(t.path)) || '').split('\n')[0]
+    const v = first.match(/(PASS|CHANGES|FAIL|READY|BLOCKED|NEEDS-INPUT|APPROVE|ESCALATE)/)
+    return v ? v[1] : ''
+  }))
+  $('#d-tabs').innerHTML = tabs.map((t, i) => `<a class="${t === cur ? 'on' : ''}" data-tab-label="${esc(t.label)}">${esc(t.label)}${verdicts[i] ? `<span class="v chip ${verdicts[i]}">${verdicts[i].toLowerCase()}</span>` : ''}</a>`).join('')
+  if (cur.shots) {
+    const imgs = (await listDir(cur.shots)).filter((f) => /\.png$/i.test(f))
+    const nested = (await listDir(cur.shots)).filter((f) => /^ui-.*\/$/.test(f))
+    for (const d of nested) for (const f of await listDir(cur.shots + d)) if (/\.png$/i.test(f)) imgs.push(d + f)
+    setBody(imgs.length ? `<div class="shots">${imgs.map((f) => `<figure><a href="${cur.shots}${f}" target="_blank"><img loading="lazy" src="${cur.shots}${f}"></a><figcaption>${esc(f.replace('.png', ''))}</figcaption></figure>`).join('')}</div>` : '<p class="empty">No screenshots.</p>')
+  } else if (cur.timeline) {
+    const j = JSON.parse(await text(cur.timeline))
+    setBody(`<h3>${esc(j.feature)}</h3><p>Branch <code>${esc(j.branch)}</code><br>Worktree <code>${esc(j.worktree)}</code><br>Simulator <code>${esc(j.simulator)}</code>${j.issue ? `<br>Issue <code>${esc(j.issue)}</code>` : ''}</p>
+      <ul class="timeline">${(j.history || []).map((h) => `<li>${new Date(h.at).toLocaleString()} · <b>${esc(h.stage)}</b>${h.note ? ` · ${esc(h.note)}` : ''}</li>`).join('')}</ul>`)
+  } else {
+    setBody(md((await maybe(cur.path)) || '(missing)'))
+  }
+}
+function setBody(html) { const b = $('#d-body'); if (b.dataset.html !== html) { b.innerHTML = html; b.dataset.html = html } }
+function openDrawer(kind, id) { drawer = { kind, id, tab: null }; $('#d-body').scrollTop = 0; $('#drawer').classList.add('open'); renderDrawer() }
+$('#d-close').onclick = () => { drawer = null; $('#drawer').classList.remove('open') }
+$('#d-tabs').onclick = (e) => { const a = e.target.closest('[data-tab-label]'); if (a) { drawer.tab = a.dataset.tabLabel; renderDrawer() } }
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#d-close').onclick() })
+$('#main').onclick = (e) => {
+  const j = e.target.closest('[data-job]'), i = e.target.closest('[data-issue]')
+  if (j) openDrawer('job', j.dataset.job)
+  else if (i) openDrawer('issue', i.dataset.issue)
+}
+
+// ---------- loop ----------
+const tab = () => (VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'board')
+let busy = false
+async function render() {
+  if (busy) return
+  busy = true
+  try {
+    document.querySelectorAll('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.tab === tab()))
+    const html = await VIEWS[tab()]()
+    if ($('#main').dataset.html !== html) { $('#main').innerHTML = html; $('#main').dataset.html = html }
+    const issues = await loadIssues()
+    const n = issues.filter((i) => i.status === 'needs-input').length
+    $('#inbox-count').hidden = !n; $('#inbox-count').textContent = n
+    $('#stamp').textContent = `updated ${new Date().toLocaleTimeString()}`
+  } catch (err) {
+    $('#main').innerHTML = `<p class="empty">Couldn't read the factory folder (${esc(err.message)}). Serve it with <code>python3 -m http.server 8765 -d factory</code> from the repo root.</p>`
+  } finally { busy = false }
+}
+window.addEventListener('hashchange', render)
+render()
+setInterval(() => { render(); if (drawer && drawer.kind === 'job') renderDrawer() }, 3000)
+</script>
+</body>
+</html>

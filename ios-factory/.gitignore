@@ -1,0 +1,6 @@
+# iOS factory. Paths are relative to this folder.
+
+# Runtime state, if the factory is ever run from this folder
+/factory/jobs/
+/factory/init/
+/build/

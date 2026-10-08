@@ -1,0 +1,9 @@
+# Applies to the whole repo. Each factory keeps its own .gitignore for its own paths.
+
+# Personal Claude Code settings (permission choices), never shared
+**/.claude/settings.local.json
+
+# macOS / Python noise
+.DS_Store
+__pycache__/
+*.pyc
