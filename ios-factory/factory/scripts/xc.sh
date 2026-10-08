@@ -74,7 +74,7 @@ ensure_sim() {
 
 xcb() { # xcb <job> <log file> <xcodebuild args...>
   local job=$1 log=$2; shift 2
-  local udid; udid="$(ensure_sim "$job")"
+  local udid; udid="$(ensure_sim "$job")" || return 1
   (cd "$(project_dir "$job")" && xcodebuild "${XCODE_CONTAINER[@]}" -scheme "$SCHEME" \
     -destination "id=$udid" -derivedDataPath "$(derived_data "$job")" "$@") >"$log" 2>&1
 }
@@ -97,7 +97,7 @@ app_path() {
 }
 
 install_app() {
-  local udid; udid="$(ensure_sim "$1")"
+  local udid; udid="$(ensure_sim "$1")" || return 1
   xcrun simctl install "$udid" "$(app_path "$1")"
   local svc
   for svc in $SIM_PRIVACY_GRANTS; do xcrun simctl privacy "$udid" grant "$svc" "$BUNDLE_ID" || true; done
@@ -105,7 +105,7 @@ install_app() {
 
 launch() { # launch <job> [args...]
   local job=$1; shift
-  local udid; udid="$(ensure_sim "$job")"
+  local udid; udid="$(ensure_sim "$job")" || return 1
   xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
   xcrun simctl launch "$udid" "$BUNDLE_ID" "$@" >/dev/null
 }
@@ -128,7 +128,7 @@ cmd_setup() {
 }
 
 cmd_build() {
-  local job=$1 log; log="$(mktemp -t "xc-build-$job").log"
+  local job=$1 log; log="$(mktemp "${TMPDIR:-/tmp}/xc-build-$job.XXXXXX")" || return 1
   cmd_setup "$job" >/dev/null
   if xcb "$job" "$log" build-for-testing; then echo "✓ build succeeded"; else show_failure "$log"; return 1; fi
 }
@@ -150,7 +150,7 @@ cmd_shots() {
   local job=$1 out=$2
   mkdir -p "$out"
   install_app "$job"
-  local udid; udid="$(ensure_sim "$job")"
+  local udid; udid="$(ensure_sim "$job")" || return 1
   local screens=("${SCREENS[@]}")
   local extra; extra="$(job_dir "$job")/screens.txt"
   if [[ -f $extra ]]; then while IFS= read -r line; do [[ -n $line && $line != \#* ]] && screens+=("$line"); done <"$extra"; fi
