@@ -96,8 +96,17 @@ def covers(pattern, path):
     return path == pattern or path.startswith(pattern + "/") or fnmatch.fnmatch(path, pattern)
 
 
+# The factory's own files (its starter-app template has Swift in it) and archived
+# docs aren't the app's code, so no wiki page should cover them.
+NOT_APP = ("factory/", ".claude/", "docs/archive/")
+
+
+def is_app_source(path):
+    return (path.endswith(SOURCE_EXT) or ".xcdatamodeld/" in path) and not path.startswith(NOT_APP)
+
+
 def tracked_sources():
-    return [p for p in git("-C", ROOT, "ls-files").splitlines() if p.endswith(SOURCE_EXT) or ".xcdatamodeld/" in p]
+    return [p for p in git("-C", ROOT, "ls-files").splitlines() if is_app_source(p)]
 
 
 def cmd_pages_for(args):
@@ -118,7 +127,7 @@ def cmd_pages_for(args):
         matched = [path for path in paths for pat in p["meta"]["code"] if covers(pat, path)]
         if matched:
             hits[p["path"]] = sorted(set(matched))
-    uncovered = [path for path in paths if path.endswith(SOURCE_EXT)
+    uncovered = [path for path in paths if is_app_source(path)
                  and not any(path in v for v in hits.values())]
     for page, files in sorted(hits.items()):
         print(f"{WIKI}/{page}: " + ", ".join(files))
