@@ -188,7 +188,9 @@ but on current iOS simulators **location can't be granted from `simctl`**: the
 "Allow … to use your location?" alert still covers the screen. Give the app a
 DEBUG launch argument that skips the request and feeds a fixed location (or
 uses the simulated one without asking), and put it in every `SCREENS` entry,
-e.g. `"map|-factoryNoPrompts"`.
+e.g. `"map|-factoryNoPrompts"`. The test run launches the app without those
+arguments, and an alert it raises survives app restarts, so `xc.sh check`
+shuts the simulator down between tests and screenshots.
 
 The `SCREENS` list in config.sh is captured for every job. The spec adds
 job-specific ones to the job's `screens.txt`.

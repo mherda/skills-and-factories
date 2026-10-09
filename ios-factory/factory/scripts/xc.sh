@@ -200,6 +200,11 @@ cmd_check() {
     echo
     echo "## Screenshots"
     if [[ $verdict == PASS ]]; then
+      # The test run launches the app without screen arguments, and a permission
+      # alert it raises stays on screen until the simulator reboots. Shut it
+      # down so cmd_shots boots it fresh (ensure_sim boots it again).
+      local udid; udid="$(udid_of "$job")"
+      if [[ -n $udid ]]; then xcrun simctl shutdown "$udid" 2>/dev/null || true; fi
       if cmd_shots "$job" "$out/shots" 2>&1; then :; else echo "(screenshots failed; see output above)"; fi
     else
       echo "Skipped: the build or tests failed."
