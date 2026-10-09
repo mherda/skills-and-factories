@@ -263,6 +263,7 @@ function chips(j) {
   if (j.kind === 'docs') out.push('<span class="chip">docs</span>')
   if (j.round) out.push(`<span class="chip ${j.checks}">checks ${j.checks === 'pending' ? '…' : j.checks.toLowerCase()}</span>`)
   if (j.stage === 'review' || j.round > 0) for (const [k, v] of Object.entries(j.reviews || {})) out.push(`<span class="chip ${v}">${k}</span>`)
+  if (j.stage === 'spec' && j.confirm === 'waiting') out.push('<span class="chip you">confirm spec</span>')
   if (j.stage === 'needs-input') out.push(`<span class="chip you">${esc(j.issue || 'waiting')} · ${esc(j.blocked_at || '')}</span>`)
   return out.join('')
 }

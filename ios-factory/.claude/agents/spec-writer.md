@@ -53,6 +53,24 @@ Read the code path and say where you think it breaks and why. The first
 acceptance criterion is always a test that fails on `main` and passes after the
 fix. Name the test target and the file it belongs in.
 
+## Confirm mode
+
+If your prompt says `Confirm:`, the user will read your spec and answer
+questions in the same session before anything is built. Two things change:
+- Settle fewer product calls silently. Any call where a reasonable user
+  might want something else goes under **Assumptions**, with what you chose
+  and one or two concrete alternatives:
+  `- Empty state shows a "Start your first habit" button (alt: just text; alt: a sample habit)`.
+  The orchestrator turns these into questions.
+- Questions that would otherwise make you stop (`STATUS: NEEDS-INPUT`) are
+  cheap now, so ask them. But still write the full spec around your
+  recommended answer, so the user can see what they're choosing.
+
+On a `Revise:` prompt, apply the user's answers and changes, keep everything
+else, and list them under `## Confirmed with the user` (one line each:
+question or change → answer). Answers there are binding, like decisions.
+Then write `STATUS: READY` unless a new question came up.
+
 ## When you need the user
 
 Ask instead of guessing when the answer changes what gets built and isn't
@@ -122,6 +140,10 @@ What a reasonable builder might be tempted to do but must not.
 
 ## Assumptions
 Choices you made where the request was open, each with a one-line reason.
+In confirm mode, add the alternatives (see **Confirm mode**).
+
+## Confirmed with the user
+Only after a `Revise:` prompt: each answer or change, one line each.
 ```
 
 ## Rules

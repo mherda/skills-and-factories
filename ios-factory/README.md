@@ -30,6 +30,7 @@ request ─► spec-writer ─► builder ─► CHECKS ─► [code, privacy, u
 | `/factory-init` | Onboard a repo: mine existing docs/plans/notes and the Xcode project → roadmap, decisions, issues, product brief, config, CLAUDE.md. Ask about anything unclear, archive the docs whose content moved |
 | `/factory <feature>` | Run a new job through the whole loop |
 | `/factory next` | Take the next `- [ ]` item from the roadmap |
+| `/factory next confirm` | Same, but first go over the spec with you: a short recap, its assumptions as questions, then build / change / not now. Also `/factory ISS-12 confirm`, `/factory confirm <feature>` |
 | `/factory ISS-12` | Work an issue (bug or feature) from the tracker |
 | `/factory status` | Jobs in flight across all sessions, plus the inbox |
 | `/factory resume <job>` | Continue a paused job after you've answered its questions |

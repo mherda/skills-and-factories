@@ -1,6 +1,6 @@
 ---
 name: factory
-description: Run the iOS software factory. Use when the user types /factory <feature>, /factory ISS-<n>, /factory next, /factory status, /factory resume <job-id>, /factory approve <job-id>, /factory rework <job-id> <note> or /factory abandon <job-id>. The session that runs it becomes the orchestrator of the spec → build → checks → review → approve → docs → merge loop for one job.
+description: Run the iOS software factory. Use when the user types /factory <feature>, /factory ISS-<n>, /factory next (any of them optionally with "confirm" to go over the spec together before the build), /factory status, /factory resume <job-id>, /factory approve <job-id>, /factory rework <job-id> <note> or /factory abandon <job-id>. The session that runs it becomes the orchestrator of the spec → build → checks → review → approve → docs → merge loop for one job.
 ---
 
 # Factory (iOS)
@@ -78,12 +78,19 @@ Keep the user posted with one short line per transition, for example
 
 ### /factory <feature>
 
+**Confirm mode.** The word `confirm` (or `--confirm`) after `next`,
+`ISS-<n>` or a feature turns it on: `/factory next confirm`,
+`/factory ISS-12 confirm`, `/factory confirm <feature>`. Strip the word from
+the request. In this mode the spec is gone over with the user, in this
+session, before anything is built. See **Confirm the spec**. It's meant
+for features. For a bug, use it only if the user asked for it explicitly.
+
 1. **Preflight.** `git -C <repo> rev-parse --verify main` must succeed and
    `factory/config.sh` must not still say `SCHEME="MyApp"`. If
    `/factory/jobs/` isn't in `.gitignore`, tell the user and stop.
 2. **Claim.** `jobstate.py claim <2-4 word kebab slug>` prints the job id
    (e.g. `004-widget-refresh`). Then
-   `jobstate.py new <job-id> "feature=<request verbatim>" kind=<feature|bug> [issue=ISS-n] ["roadmap=<item text>"]`.
+   `jobstate.py new <job-id> "feature=<request verbatim>" kind=<feature|bug> [issue=ISS-n] ["roadmap=<item text>"] [confirm=true]`.
 3. **Link trackers.** If this came from a roadmap item, change its line from
    `- [~] <text> · claimed` (or `- [ ] <text>`) to `- [~] <text> · job <job-id>`.
    If it came from an issue, set `status: in-progress` and `job: <job-id>`,
@@ -106,10 +113,63 @@ Keep the user posted with one short line per transition, for example
    - If there are no matching rows, or no prototype, skip this step.
 6. **Spec.** Spawn `spec-writer` with
    `<paths> Request: <feature verbatim>` (or `Request: issue <repo>/factory/issues/<file>`).
+   In confirm mode, add `Confirm: the user reviews this spec before the build.`
    When it finishes, read the first line of `spec.md`:
-   - `STATUS: NEEDS-INPUT`: go to **Needs input** with `blocked_at=spec`.
-   - `STATUS: READY`: copy the lines under `## Screens` (unless "None.") into
-     `<job folder>/screens.txt`, then go to **Build**.
+   - `STATUS: NEEDS-INPUT`: in confirm mode, go to **Confirm the spec**,
+     since the user is here to answer. Otherwise go to **Needs input** with
+     `blocked_at=spec`.
+   - `STATUS: READY`: in confirm mode, go to **Confirm the spec** first.
+     Then copy the lines under `## Screens` (unless "None.") into
+     `<job folder>/screens.txt`, and go to **Build**.
+
+### Confirm the spec
+
+The user asked to be on the same page before the build. Keep it short: a
+recap they can read in thirty seconds, then only the questions that matter.
+
+1. `jobstate.py set <job-id> confirm=waiting`.
+2. **Recap.** From `spec.md`, in your own words, in at most about 12 lines:
+   - what this is and why, in one or two sentences, tied to the roadmap item
+     and product.md;
+   - what the user will see or be able to do, as the acceptance criteria
+     condensed to bullets;
+   - the screens it adds or changes, naming design artboards if there are
+     any;
+   - its iOS impact, but only the "yes" lines, such as a new permission or
+     a data model change;
+   - what's deliberately left out (Out of scope), in one line.
+3. **Questions**, with AskUserQuestion, up to four per call:
+   - every question under `## Questions` (when the spec is
+     `STATUS: NEEDS-INPUT`);
+   - then the `## Assumptions` worth checking. Each one becomes a question,
+     with the spec's choice first, marked "(Recommended)", and its
+     alternatives after it. Skip trivial ones. The user sees them all in the
+     spec if they want.
+   - Keep it to two calls at most. If there are more, ask the most
+     consequential ones and list the rest in a line as "also assumed: …".
+4. **Go/no-go**, as one AskUserQuestion:
+   - "Build it" (Recommended);
+   - "Change something": they say what, in their own words;
+   - "Not now": park it.
+5. Act on the answers:
+   - **Any answer or change** that differs from the spec: spawn `spec-writer`
+     again with
+     `<paths> Revise: the user reviewed the spec. Answers: <Q → answer, one per line>. Changes: <their words>. Update spec.md and record these under ## Confirmed with the user.`
+     If the revised spec settles everything, show only what changed, in two
+     or three lines. Go back to step 4 at most twice; after that, build
+     with what's agreed or park, as the user says.
+   - **An answer that's a standing rule**, not just a call for this feature
+     (for example "never show streak numbers in red"): offer to record it
+     with `/decide`.
+   - **Build it**: `jobstate.py set <job-id> confirm=done`, add a dated Log
+     line to the issue if there is one, then carry on from the `READY`
+     branch of step 6 (screens.txt, then **Build**).
+   - **Not now**: the job is abandoned (see **/factory abandon**). The
+     roadmap item goes back to `- [ ]`, or to `- [-]` if the user says to
+     park it. Keep `spec.md` in the job folder, and mention its path.
+6. If the user goes quiet or ends the session, the job waits in `spec`
+   with `confirm=waiting`. `/factory resume <job-id>` picks it up at
+   step 2.
 
 ### /factory ISS-<n>
 
@@ -278,8 +338,12 @@ the user has one inbox (`/issues`), whichever session they're in.
 
 ## /factory resume <job-id>
 
-The job must be `needs-input`, and its issue must have an answer to every
-question under `## Answers`. If not, point the user at `/issues ISS-<n>`.
+A job in stage `spec` with `confirm=waiting` was interrupted while you went
+over its spec: go straight to **Confirm the spec**, step 2. It has no issue to
+check.
+
+Otherwise the job must be `needs-input`, and its issue must have an answer to
+every question under `## Answers`. If not, point the user at `/issues ISS-<n>`.
 Set the issue to `status: in-progress` with a Log line, the roadmap `[?]` back
 to `[~]`, and `resumes=0`. Then continue from `blocked_at`:
 

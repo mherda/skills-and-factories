@@ -6,7 +6,7 @@ this script, so the file stays valid JSON and every stage change lands in the
 job's history.
 
   jobstate.py claim <slug>                         claim the next job number, print the job id
-  jobstate.py new <job-id> feature=... [kind=feature|bug|docs] [issue=ISS-001] [roadmap=...]
+  jobstate.py new <job-id> feature=... [kind=feature|bug|docs] [issue=ISS-001] [roadmap=...] [confirm=true]
   jobstate.py get <job-id> [dotted.key]            print the job (or one value)
   jobstate.py set <job-id> key=value ...           update keys (dotted keys, JSON values allowed)
   jobstate.py list [--active]                      one line per job
@@ -95,6 +95,7 @@ def new(job_id, pairs):
         "issue": None,
         "roadmap": None,
         "blocked_at": None,
+        "confirm": None,  # true → the user confirms the spec before the build; then "waiting", "done"
         "created": now(),
         "history": [{"at": now(), "stage": "spec"}],
     }

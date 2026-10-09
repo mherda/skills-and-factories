@@ -244,6 +244,22 @@ for tests).
 
 ## 6. The question → answer → resume loop
 
+**Confirm mode** (`/factory next confirm`) is the live, in-session version
+of this loop, used when you'd rather agree on a feature than discover the
+spec in review.
+- The spec-writer gets `Confirm:`. It turns its open product calls into
+  **Assumptions** with alternatives, instead of settling them quietly, and
+  still writes a full spec.
+- The orchestrator recaps the spec, asks the assumptions and any
+  `## Questions` as AskUserQuestion pickers (at most two rounds), then asks
+  build / change / not now.
+- Differences go back to the spec-writer as `Revise:`. It records them under
+  `## Confirmed with the user`, and those answers are binding.
+- `job.json` has `confirm: true → waiting → done`. A job left `waiting`
+  stays in stage `spec`, and the dashboard shows a "confirm spec" chip.
+  `/factory resume` picks it up.
+- No issue is created, because the user answers on the spot.
+
 1. An agent writes `STATUS: NEEDS-INPUT` (or the approver writes `ESCALATE`)
    with `### Q<n>` questions, each with lettered options and a recommendation.
 2. The orchestrator copies the questions into the job's issue (creating one
