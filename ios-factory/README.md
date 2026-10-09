@@ -302,6 +302,16 @@ Unreleased into a dated release, writes the What to Test text, stamps the
 roadmap, and tags the commit. Signing uses your Xcode account, or an App Store
 Connect API key via `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH`.
 
+## When the factory itself has a bug
+
+Jobs sometimes trace a failure to the factory's own scripts rather than your
+app. The orchestrator asks you, fixes it on the app's main branch as a
+separate commit, and logs it in `factory/UPSTREAM.md`. The job then carries
+on. Port the fix to ios-factory when it suits you. Until you do,
+`install.sh --update` keeps the app's fixed copy (instead of reinstalling
+the bug) and prints the diff to port. It ticks the entry once ios-factory
+has the fix.
+
 ## Limits and choices
 
 - **Agents can't tap.** Visual review covers what launch arguments, deep links

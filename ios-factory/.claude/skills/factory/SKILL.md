@@ -198,6 +198,9 @@ again. Then run `/factory <text>` with `roadmap=<text>`. Step 3 replaces
 
 Read the first line of `build.md`:
 - `STATUS: READY`: go to **Checks** for the next round.
+- `STATUS: NEEDS-INPUT` with a `## Factory tooling` section: go to
+  **Factory tooling fixes**. If the user picks "Not now" there, go to
+  **Needs input** with the tooling problem as the question.
 - `STATUS: NEEDS-INPUT` or `STATUS: BLOCKED`: go to **Needs input** with
   `blocked_at=build`.
 
@@ -393,6 +396,35 @@ line on what the user can do next (`/issues` for questions,
 Point out the dashboard:
 `python3 -I factory/scripts/serve.py`, then
 <http://localhost:8765/dashboard.html>.
+
+## Factory tooling fixes
+
+An agent (usually the builder, in a `## Factory tooling` section) or a
+failed step may trace a problem to the factory's own files rather than the
+app. Factory-owned files are `factory/scripts/`, `factory/hooks/`,
+`factory/templates/`, `factory/dashboard.html`, `.claude/agents/` and
+`.claude/skills/`. Fixing these is the one exception to "you never write
+code": they're shared tooling on main, and no job branch owns them.
+
+1. Check the diagnosis yourself: read the code and reproduce if it's
+   cheap. Then tell the user in two or three lines: the file, the bug, the
+   one-line fix. Ask "Fix it on main" (Recommended) / "Not now".
+2. Fix it in the main checkout, never on the job branch. Keep the change to
+   the minimum, with a comment saying why. Check it: `bash -n` or
+   `python3 -I -m py_compile`, and re-run what failed if you can.
+3. Add a line to `factory/UPSTREAM.md`:
+   `- [ ] <date> · <short commit> · <file(s)> · <what and why, one line>`.
+   Use `pending` for the commit, and fill in the real hash with an amend
+   right after the commit.
+4. Commit only those paths, as
+   `factory: <file>: <what>`. Other sessions' tracker edits must not be
+   swept in.
+5. Tell the user one line: "Fixed in this app; logged in
+   factory/UPSTREAM.md. Port it to ios-factory before the next
+   `install.sh --update`." Then go on with the job. Fixes to `xc.sh` take
+   effect in every worktree at once, because jobs run the main checkout's
+   scripts. Usually that means resuming the builder, or re-running
+   **Checks**, with a note that the tooling is fixed.
 
 ## Parallel jobs
 

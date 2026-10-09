@@ -107,6 +107,16 @@ line `STATUS: NEEDS-INPUT` and a `## Questions` section in the same format the
 spec uses (`### Q1: ...?`, Context, Options A/B with the recommended option
 first). Don't guess, and don't paper over a failure to reach READY.
 
+**The factory's own tooling.** If the cause is in factory-owned files (for
+example `xc.sh` launches the wrong process, or a hook misfires), don't work
+around it in app code. You can't fix those files either, because they live
+on main. Stop with `STATUS: NEEDS-INPUT` and a `## Factory tooling` section
+instead of questions:
+- the file and line;
+- the evidence (what you ran and what happened);
+- the fix you propose, as a diff or as exact lines.
+The orchestrator fixes it on main.
+
 ## Write build.md
 
 Rewrite it at the end of every round. Keep the Log from earlier rounds.

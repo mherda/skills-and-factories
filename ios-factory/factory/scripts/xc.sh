@@ -107,7 +107,10 @@ launch() { # launch <job> [args...]
   local job=$1; shift
   local udid; udid="$(ensure_sim "$job")" || return 1
   xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
-  xcrun simctl launch "$udid" "$BUNDLE_ID" "$@" >/dev/null
+  # The system can relaunch the app in the background (location, background
+  # fetch) between terminate and launch; a plain launch would reuse that
+  # argument-less process and ignore "$@".
+  xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE_ID" "$@" >/dev/null
 }
 
 set_variant() { # set_variant <udid> light|dark|large-text

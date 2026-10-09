@@ -36,6 +36,50 @@ owned() {
   esac
 }
 
+# Unported fixes (factory/UPSTREAM.md): with --update, keep the app's copy of
+# those files rather than overwrite the fix; tick entries the factory now has.
+declare -a HELD=()
+has_fix() { # has_fix <commit> <file>: does the factory's copy already have that commit's change?
+  # Ported when every code line the commit added is in the factory's file
+  # (comments may be reworded when porting). Unknown commit: files must match.
+  local commit=$1 f=$2
+  cmp -s "$SRC/$f" "$DEST/$f" && return 0
+  git -C "$DEST" rev-parse -q --verify "$commit^{commit}" >/dev/null 2>&1 || return 1
+  git -C "$DEST" diff "$commit^" "$commit" -- "$f" | python3 -I -c '
+import sys
+have = {l.strip() for l in open(sys.argv[1], encoding="utf-8", errors="replace")}
+added = [l[1:].strip() for l in sys.stdin if l.startswith("+") and not l.startswith("+++")]
+code = [l for l in added if len(l) > 3 and not l.startswith(("#", "//", "<!--"))]  # skip fi, }, ;; ...
+sys.exit(0 if code and all(l in have for l in code) else 1)' "$SRC/$f"
+}
+UP="$DEST/factory/UPSTREAM.md"
+if [[ $UPDATE == 1 && -f $UP ]]; then
+  ENTRIES=() TICK=()
+  while IFS= read -r line; do ENTRIES+=("$line"); done < <(grep -E '^- \[ \] ' "$UP" || true)
+  for line in "${ENTRIES[@]+"${ENTRIES[@]}"}"; do
+    commit="$(sed -E 's/^- \[ \] [^·]*· *([^ ·]*) *·.*/\1/' <<<"$line")"
+    files="$(sed -E 's/^- \[ \] [^·]*· [^·]*· ([^·]*) ·.*/\1/' <<<"$line" | tr ',' ' ')"
+    ported=1
+    for f in $files; do has_fix "$commit" "$f" || ported=0; done
+    if [[ $ported == 1 ]]; then
+      TICK+=("$line"); echo "  ✓ ported upstream: ${line#- \[ \] }"
+    else
+      for f in $files; do HELD+=("$f"); done
+      echo "  ⚠ not yet in ios-factory: ${line#- \[ \] }"
+      for f in $files; do echo "      diff -u \"$SRC/$f\" \"$DEST/$f\""; done
+    fi
+  done
+  if ((${#TICK[@]})); then
+    python3 -I -c '
+import sys
+p, done = sys.argv[1], sys.argv[2:]
+lines = open(p, encoding="utf-8").read().split("\n")
+lines = ["- [x]" + l[5:] if l in done else l for l in lines]
+open(p, "w", encoding="utf-8").write("\n".join(lines))' "$UP" "${TICK[@]}"
+  fi
+fi
+held() { local h; for h in "${HELD[@]+"${HELD[@]}"}"; do [[ $h == "$1" ]] && return 0; done; return 1; }
+
 new=0 updated=0 same=0 skipped=0
 while IFS= read -r -d '' f; do
   rel="${f#"$SRC"/}"
@@ -45,6 +89,8 @@ while IFS= read -r -d '' f; do
     [[ $UPDATE == 1 ]] && echo "  + $rel"
   elif cmp -s "$f" "$dest"; then
     same=$((same + 1))
+  elif [[ $UPDATE == 1 ]] && held "$rel"; then
+    skipped=$((skipped + 1)); echo "  ⏸ $rel kept (unported fix, see factory/UPSTREAM.md)"
   elif [[ $UPDATE == 1 ]] && owned "$rel"; then
     cp -p "$f" "$dest"; updated=$((updated + 1)); echo "  ↻ $rel"
   else

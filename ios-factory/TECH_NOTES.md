@@ -39,6 +39,7 @@ factory/
   decisions.md           committed tracker
   releases.md            committed tracker
   design.md              committed: prototype link, visual direction, screen rows (draft/approved/built)
+  UPSTREAM.md            committed: fixes to factory-owned files made in this app, not yet ported to ios-factory
   issues/                committed tracker, one file per issue (+ _TEMPLATE.md)
   jobs/                  gitignored runtime state, one folder per job
   dashboard.html         read-only view of all of the above
@@ -433,6 +434,27 @@ screenshots are the reference. `/factory-new` can run `/design new` between
 shaping and drafting, so the approved screens decide the roadmap order.
 
 ## 10. Changing the factory
+
+### Fixes found in an app (UPSTREAM.md)
+
+Factory bugs usually show up while a job runs in an app, for example
+`mktemp`, the simulator reboot before screenshots, or `launch` reusing a
+background process. When that happens:
+- The builder reports it in a `## Factory tooling` section rather than
+  working around it.
+- The orchestrator fixes it on the app's main branch, as its own
+  `factory: <file>: <what>` commit, and logs it in `factory/UPSTREAM.md`.
+
+`install.sh --update` reads the unticked entries:
+- **Already ported**: every code line the fix commit added (ignoring
+  comments and trivial lines like `fi`) is already in ios-factory's copy.
+  It ticks the entry and updates the file as usual.
+- **Not ported yet**: it keeps the app's copy of those files, so the update
+  can't undo the fix, and prints a `diff -u` to port from.
+
+To port a fix, apply the diff in ios-factory and commit it there. The next
+`--update` in the app ticks the entry by itself. If the port had to change
+the code itself (not just comments), tick the entry by hand.
 
 - **Add a review lens** (e.g. `reviewer-perf`): add the agent file, add its key
   to the `reviews` dict in `jobstate.py new`, list it in the factory skill's
