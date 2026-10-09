@@ -29,6 +29,7 @@ using it.
     testflight/SKILL.md  checklist → confirm → upload → record
     docs/SKILL.md        docs-only audit job
     factory-init/SKILL.md  onboarding: doc-miner → questions in rounds → apply on a branch → archive
+    factory-new/SKILL.md   new app: app-planner shape → you approve suggestions → app-planner draft → questions → scaffold.py → build/test/shots → wiki seed
   agents/                one file per agent (frontmatter: tools + model)
 factory/
   config.sh              per-app settings, sourced by the shell scripts
@@ -40,6 +41,7 @@ factory/
   jobs/                  gitignored runtime state, one folder per job
   dashboard.html         read-only view of all of the above
   templates/wiki/        seed for docs/wiki: index.md, glossary.md, _templates/ per page type
+  templates/app/         starter app for /factory-new ({{APP}} placeholders, __APP__ in paths)
 docs/wiki/               (in the app repo) the project wiki, kept by the documenter
   scripts/
     jobstate.py          the only writer of job.json
@@ -342,6 +344,51 @@ section to its page. After apply, the old file is archived.
 Why archive rather than delete: the mapping keeps every original sentence
 traceable. CLAUDE.md is never archived, because it's the agents' entry point.
 It slims down to conventions, commands, Screens and a pointer to the wiki.
+
+### New apps (/factory-new)
+
+The same shape as init, with an idea in place of existing docs, plus a
+shaping step first.
+- `app-planner` runs twice. In **shape** mode it writes only
+  `suggestions.md`: specific improvements, each with its kind, cost and
+  effect on the plan.
+- The user gives each one a verdict: yes, yes with changes, later, or no.
+- In **draft** mode it gets the approved ids (rejected ones are never
+  brought back), and drafts into `factory/init/`.
+
+Two separate runs keep the plan from ever containing a suggestion the user
+didn't see. The idea file stays as written. The suggestions and their
+verdicts are archived beside it. The skill asks the questions, required ones
+first, then applies everything on `factory/init`.
+
+The starter app is a template, not a job. `scaffold.py` renders
+`factory/templates/app/`:
+- it replaces `{{APP}}`, `{{DISPLAY_NAME}}`, `{{BUNDLE_ID}}`, `{{TEAM_ID}}`,
+  `{{IOS_MIN}}` and `{{DEVICE_FAMILY}}`, and `__APP__` in paths;
+- a line ending in `# only:universal` or `# only:iphone` is kept only for
+  those devices;
+- `gitignore.append` is merged into `.gitignore`;
+- it never overwrites a file.
+
+A template is deterministic and tested. It's also the same every time, so
+the first real job isn't spent reviewing boilerplate. The skill still proves
+the result with `xc.sh build`, `test` and `shots` before it commits.
+
+What the template gives every app:
+- an XcodeGen project with strict concurrency and per-target device family;
+- `FactoryLaunch` (`-factoryScreen`, `-factoryNoPrompts`), so the UX reviewer
+  can see screens from the first job;
+- a privacy manifest;
+- `AppInfo` with a real test.
+
+Purpose strings and entitlements are left to the job that needs them.
+
+To change the starter app, edit `factory/templates/app/`, then check it on a
+scratch folder:
+1. `install.sh /tmp/x`
+2. `scaffold.py values.json --dest /tmp/x`
+3. Fill `config.sh` as the skill does.
+4. `xc.sh setup|build|test|shots main`
 
 ## 10. Changing the factory
 

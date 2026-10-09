@@ -17,6 +17,10 @@ plan, decisions and open questions. Nothing is deleted: migrated docs move to
 - `factory/` and `.claude/skills/factory/` exist (copied in, or by
   `install.sh`). If not, tell the user to run
   `<path to ios-factory>/install.sh <repo>` first.
+- There's an app to onboard. If the repo has no Xcode project
+  (`*.xcodeproj`, `project.yml`, `Project.swift`) and no Swift sources outside
+  `factory/`, it's a new app: stop and point to `/factory-new`, which starts
+  from an idea file.
 - The working tree is clean (`git status --porcelain`). Init ends in one
   reviewable commit, and must not mix with unrelated changes.
 - If `factory/roadmap.md` already has real items (not the template's example),

@@ -1,0 +1,18 @@
+.DS_Store
+.claude/settings.local.json
+# The project is generated from ios/project.yml by XcodeGen. Don't commit it.
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+*.xcresult
+*.xcarchive
+*.ipa
+*.dSYM.zip
+*.p8
+*.p12
+*.mobileprovision
+/factory/jobs/
+/build/

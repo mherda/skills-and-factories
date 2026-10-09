@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Install the iOS factory into an app repo, or update an installed one.
 #
-#   ./install.sh <app repo>            first install: copies everything, never overwrites
+#   ./install.sh <app repo>            first install: copies everything, never overwrites.
+#                                      A new or empty folder works too: it's created and
+#                                      git-initialised, ready for /factory-new.
 #   ./install.sh --update <app repo>   refresh factory-owned files (agents, skills,
 #                                      scripts, hooks, dashboard, templates); never touches
 #                                      the project's own config, trackers or product brief
@@ -10,15 +12,21 @@
 # it already has its own pre-commit/post-commit hooks. Re-run on each clone,
 # because git hooks aren't versioned.
 #
-# Then open Claude Code in the app repo and run /factory-init (first install).
+# Then open Claude Code in the app repo and run /factory-init (existing app) or
+# /factory-new (new app, from an idea).
 set -euo pipefail
 
 UPDATE=0
 if [[ ${1:-} == --update ]]; then UPDATE=1; shift; fi
 SRC="$(cd "$(dirname "$0")" && pwd)"
 DEST="${1:?Usage: install.sh [--update] <path to app repo>}"
+mkdir -p "$DEST"
 DEST="$(cd "$DEST" && pwd)"
-git -C "$DEST" rev-parse --show-toplevel >/dev/null
+FRESH=0
+if ! git -C "$DEST" rev-parse --show-toplevel >/dev/null 2>&1; then
+  [[ $UPDATE == 1 ]] && { echo "✗ $DEST is not a git repo. Install first (without --update)." >&2; exit 1; }
+  git -C "$DEST" init -q -b main && FRESH=1 && echo "  ✱ git init $DEST (branch main)"
+fi
 
 # Files the factory owns. Everything else under factory/ belongs to the project.
 owned() {
@@ -72,5 +80,10 @@ if [[ $UPDATE == 1 ]]; then
   echo "  Review with: git -C \"$DEST\" diff --stat   then commit."
 else
   echo "✓ Copied $new files into $DEST ($skipped already there, left untouched)."
-  echo "  Next: commit them, open Claude Code in $DEST, and run /factory-init."
+  if [[ $FRESH == 1 || -z "$(git -C "$DEST" ls-files | grep -v -e '^factory/' -e '^\.claude/' -e '^\.gitignore$' | head -1)" ]]; then
+    echo "  New app? Put your idea in $DEST/IDEA.md (or just describe it), open Claude Code"
+    echo "  there and run /factory-new. It commits the factory files for you."
+  else
+    echo "  Next: commit them, open Claude Code in $DEST, and run /factory-init."
+  fi
 fi

@@ -26,6 +26,7 @@ request ─► spec-writer ─► builder ─► CHECKS ─► [code, privacy, u
 
 | Command | What it does |
 | --- | --- |
+| `/factory-new [IDEA.md]` | Start a new app from an idea: product brief, decisions (a default stack plus what the idea settles), roadmap, questions in rounds, then a starter app that builds, tests and screenshots, and a seeded wiki |
 | `/factory-init` | Onboard a repo: mine existing docs/plans/notes and the Xcode project → roadmap, decisions, issues, product brief, config, CLAUDE.md. Ask about anything unclear, archive the docs whose content moved |
 | `/factory <feature>` | Run a new job through the whole loop |
 | `/factory next` | Take the next `- [ ]` item from the roadmap |
@@ -58,6 +59,7 @@ Decisions and Releases tabs and per-round screenshot galleries.
 | `reviewer-ux` | sonnet | Looks at the screenshots (light / dark / large text): states, HIG, Dynamic Type, VoiceOver, copy |
 | `reviewer-release` | opus | Ships safely on top of existing installs? SwiftData/CloudKit schema, mixed versions, widgets, battery, App Review risk. Writes **ship notes** |
 | `approver` | opus | Merge on its own, or escalate (data model, entitlements, deps, signing, product calls…) |
+| `app-planner` | opus | `/factory-new` only: turns an idea into a product brief, decisions, roadmap and scaffold values, plus questions |
 | `doc-miner` | opus | `/factory-init` only: turns existing docs and the project into factory drafts plus questions |
 | `documenter` | sonnet | Keeps the wiki true: updates the affected pages on the branch before merge, audits, and seeds the wiki from old notes at init |
 
@@ -138,6 +140,51 @@ moves fully migrated docs to `docs/archive/` with an index of where each
 piece went, replaces migrated sections of living docs with pointers, and
 fixes references. Old tech notes are archived once the wiki replaces them.
 CLAUDE.md slims down to conventions, commands and a pointer to the wiki. Run `/factory-init --refresh` later to adopt new notes files.
+
+### Starting a new app
+
+```bash
+./install.sh ~/projects/habit-loop  # creates the folder and runs git init if needed
+cd ~/projects/habit-loop
+$EDITOR IDEA.md                     # the idea: a paragraph or a full brief
+claude                              # then: /factory-new
+```
+
+**`/factory-new`** commits the factory files first, then:
+- **It shapes the idea.** The `app-planner` agent critiques the idea and
+  suggests specific improvements:
+  - coherence gaps;
+  - reasons to come back;
+  - what sets the app apart;
+  - iOS features that fit;
+  - scope cuts;
+  - risks, each with a way round it.
+  
+  You answer each suggestion with yes, yes with changes, later, or no.
+  Nothing you don't approve gets into the plan. Pass `--as-is` to skip this
+  step.
+- Then the `app-planner` agent drafts `factory/product.md`, `decisions.md`,
+  `roadmap.md` (an MVP milestone, later ones, and a parked list) and the
+  config.
+- The decisions are the factory's default stack plus whatever the idea
+  settles. The stack: Swift 6 and SwiftUI, XcodeGen, `@Observable` services,
+  SwiftData, Swift Testing, no packages without asking.
+- It asks questions four at a time, starting with the ones it can't do
+  without: the name, the bundle id, the minimum iOS and the devices.
+- After you review, it renders the starter app from
+  `factory/templates/app/` (via `scaffold.py`) on a `factory/init` branch:
+  - an XcodeGen project in `ios/`;
+  - a SwiftUI shell with a home screen and a Settings sheet;
+  - the `-factoryScreen` and `-factoryNoPrompts` hooks;
+  - a privacy manifest and a Swift Testing target;
+  - a CLAUDE.md with Screens and Conventions sections.
+- It builds, tests and screenshots the app before committing, and seeds the
+  wiki.
+- The idea file moves to `docs/archive/`, with the suggestions and your
+  verdicts. Then `/factory next` builds the
+  first feature.
+
+No idea file? Run `/factory-new` and describe the app when it asks.
 
 ### Manual install
 

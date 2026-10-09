@@ -135,7 +135,8 @@ cmd_build() {
 
 cmd_test() {
   local job=$1 out=$2; shift 2
-  mkdir -p "$out"
+  # Absolute: xcodebuild runs from PROJECT_DIR, so a relative result path would land there.
+  mkdir -p "$out" && out="$(cd "$out" && pwd)"
   rm -rf "$out/tests.xcresult"
   local args=(test -resultBundlePath "$out/tests.xcresult")
   if [[ $# -eq 0 && -n $UI_TEST_SCREENS ]]; then args+=("-skip-testing:$UI_TEST_SCREENS"); fi
