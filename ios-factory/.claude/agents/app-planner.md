@@ -71,7 +71,18 @@ Don't rewrite the idea, and don't draft anything else in this mode.
 
 ## 2. Draft
 
-Your prompt lists the suggestions the user approved (some with the user's
+If your prompt has a `Design:` line, read that design.md:
+- Its Screens rows are the app's screens. Order M1 so each item builds one
+  or more of them, and put each row's screen name in the item's text where
+  it helps, e.g. "Home: habit list (home)". Then fill each row's Roadmap
+  column with that item's text.
+- Its Visual direction goes into product.md's "Tone and feel".
+- Each design rule the user agreed becomes a decision with `Scope: ui` and
+  `Source: user (design)`.
+- The `SCREENS` config only lists `home` and `settings`, the screens the
+  scaffold has. Jobs add the rest.
+
+Your prompt also lists the suggestions the user approved (some with the user's
 edits), and may say which ones they rejected. Treat approved suggestions as
 part of the idea, tagging items that come from them `<!-- from S3 -->`. Never
 bring back a rejected suggestion, whether as a decision, a roadmap item or a

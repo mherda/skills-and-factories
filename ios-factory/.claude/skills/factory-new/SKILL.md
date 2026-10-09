@@ -1,6 +1,6 @@
 ---
 name: factory-new
-description: Start a new iOS app from an idea. Reads an idea file (or the user's description), suggests improvements for the user to approve, drafts the product brief, decisions (the factory's default stack plus what the idea settles) and a roadmap, asks the user questions in rounds, renders a buildable starter app (XcodeGen, SwiftUI shell, screenshot hooks, tests), seeds the wiki, checks it builds, tests and screenshots, and commits it all on a branch. Use when the user types /factory-new [file] [--as-is], or asks to start, create or bootstrap a new app with the factory.
+description: Start a new iOS app from an idea. Reads an idea file (or the user's description), suggests improvements for the user to approve, optionally prototypes the key screens as a Claude Design canvas, drafts the product brief, decisions (the factory's default stack plus what the idea settles) and a roadmap, asks the user questions in rounds, renders a buildable starter app (XcodeGen, SwiftUI shell, screenshot hooks, tests), seeds the wiki, checks it builds, tests and screenshots, and commits it all on a branch. Use when the user types /factory-new [file] [--as-is], or asks to start, create or bootstrap a new app with the factory.
 ---
 
 # Factory new
@@ -66,11 +66,34 @@ that the user hasn't approved.**
 The idea file itself stays as the user wrote it. The approved suggestions
 live in `suggestions.md`, which is archived next to it.
 
+## 1a. Prototype the screens (optional)
+
+Ask: "Prototype the key screens before planning?", with these options:
+- "Yes" (Recommended), described as "a Claude Design canvas on claude.ai, one
+  phone screen per artboard; you can comment on it and approve";
+- "Later", described as "plan now, run /design new any time";
+- "No".
+
+On **Yes**, run the `/design` skill's **new** flow, with
+`factory/init/design.md` as its design.md (copy the template from
+`factory/design.md` first). Its brief is the idea plus the approved
+suggestions. Then loop:
+1. Give the user the link.
+2. Ask: "Approve all" / "Revise" (a note, or comments left on the canvas) /
+   "Approve some" / "Stop here (keep as draft)".
+3. On Revise, run `/design revise` and ask again.
+
+On approve, run `/design approve`, but hold back its decision offers: they
+go to the planner instead. Agreed design rules become decisions in step 1b.
+The screen list and the direction now shape the plan.
+
 ## 1b. Plan
 
 Spawn `app-planner` with
 `Mode: draft. Repo: <repo>. Factory: <repo>/factory/. Idea: <repo>/<idea file>. Approved suggestions: <ids, with changes and "later" flags>. Rejected: <ids>. Write drafts to <repo>/factory/init/.`
-(with `--as-is`: `Approved suggestions: none (as-is)`). It writes these
+(with `--as-is`: `Approved suggestions: none (as-is)`). If step 1a ran, add
+`Design: <repo>/factory/init/design.md (<approved | draft>). Design rules the user agreed: <list>.`
+It writes these
 drafts:
 - `product.md`, `decisions.md`, `roadmap.md`, `releases.md`, `config.sh`;
 - `scaffold.json` and `questions.md`;
@@ -129,6 +152,8 @@ Ask: "Apply" (Recommended) / "Change something" / "Cancel". Cancel deletes
    - Keep the format comment blocks at the top of roadmap.md and
      decisions.md.
    - Add the scaffold to the top of M1 as done: `- [x] App scaffold (/factory-new)`.
+   - `factory/design.md`, if step 1a ran. Its link stays the same, since the
+     canvas lives on claude.ai.
 3. Render the app: `python3 -I $S/scaffold.py factory/init/scaffold.json --dest .`.
 4. Fill in CLAUDE.md. Replace its two `/factory-new` comments: one with
    the app in two or three sentences from product.md, the other with the

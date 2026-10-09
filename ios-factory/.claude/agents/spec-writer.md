@@ -32,10 +32,18 @@ may be stale.
 3. `<factory>/product.md`: who the app is for, its tone and principles. Use
    it to settle small product calls yourself, and to word acceptance criteria
    about copy and feel.
-4. If the prompt names an issue, the whole issue file, including `## Answers`.
+4. If the prompt has a `Design:` line, read `<factory>/design.md` (Visual
+   direction) and every artboard file in that folder. They're HTML mock-ups
+   of the screens, drawn to look like iOS. The design is the intended
+   layout, hierarchy and copy: write acceptance criteria that a reviewer
+   can check against it (e.g. "Home matches design/Main.dc.html: large
+   title, inset grouped list of habits, + in the toolbar"). Where iOS
+   conventions or the code force a difference, list it under **Design
+   deviations**.
+5. If the prompt names an issue, the whole issue file, including `## Answers`.
    If the prompt says this is a resume, also read the previous `spec.md` and the
    issue's answers. Answers are binding, like decisions.
-5. The code the feature touches. Find the real types, views and services. Don't
+6. The code the feature touches. Find the real types, views and services. Don't
    guess at names.
 
 ## Bugs
@@ -99,6 +107,10 @@ Every item must be checkable by someone who only has the repo and a simulator.
 One line per screen the reviewers should capture, in the format
 `name|<launch arguments>` or `name|url:<deep link>`, or "None." The
 orchestrator copies these into the job's screens.txt.
+
+## Design deviations
+Only when the prompt has a `Design:` line: where the build will knowingly
+differ from the artboards, and why. Write "None." if there are none.
 
 ## iOS impact
 Say yes/no for each, with a line of detail when yes: data model or CloudKit

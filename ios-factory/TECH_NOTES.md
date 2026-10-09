@@ -29,6 +29,7 @@ using it.
     testflight/SKILL.md  checklist → confirm → upload → record
     docs/SKILL.md        docs-only audit job
     factory-init/SKILL.md  onboarding: doc-miner → questions in rounds → apply on a branch → archive
+    design/SKILL.md      Claude Design canvas: new, add, revise (incl. canvas comments), approve → design.md
     factory-new/SKILL.md   new app: app-planner shape → you approve suggestions → app-planner draft → questions → scaffold.py → build/test/shots → wiki seed
   agents/                one file per agent (frontmatter: tools + model)
 factory/
@@ -37,6 +38,7 @@ factory/
   roadmap.md             committed tracker
   decisions.md           committed tracker
   releases.md            committed tracker
+  design.md              committed: prototype link, visual direction, screen rows (draft/approved/built)
   issues/                committed tracker, one file per issue (+ _TEMPLATE.md)
   jobs/                  gitignored runtime state, one folder per job
   dashboard.html         read-only view of all of the above
@@ -389,6 +391,30 @@ scratch folder:
 2. `scaffold.py values.json --dest /tmp/x`
 3. Fill `config.sh` as the skill does.
 4. `xc.sh setup|build|test|shots main`
+
+### Design prototypes (/design)
+
+The canvas is a claude.ai Artifact made from the Design type. Only the main
+session can create, read or change it, through the Artifact tool. Agents
+never see it.
+
+The handover is through files:
+- `design.md` holds the direction in words and a row per screen, keyed by
+  the `-factoryScreen` name.
+- At job start (factory skill, step 5), the orchestrator `read`s each
+  matching artboard (`project/<artboard>`, a self-contained `.dc.html` file)
+  into `<job folder>/design/`.
+- It adds a `Design:` line to the spec-writer, builder and UX reviewer
+  prompts.
+
+The artboards are HTML, so agents read them for layout, copy and colours,
+never as code to port. Native rendering differences aren't findings. Drift
+in hierarchy, copy or colour is, unless the spec's **Design deviations**
+allows it.
+
+Rows go draft → approved → built (at merge). After that the simulator
+screenshots are the reference. `/factory-new` can run `/design new` between
+shaping and drafting, so the approved screens decide the roadmap order.
 
 ## 10. Changing the factory
 

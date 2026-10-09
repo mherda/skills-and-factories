@@ -4,7 +4,7 @@ Claude Code skills, agents and factories I reuse across projects.
 
 | Folder | What |
 | --- | --- |
-| [`ios-factory/`](ios-factory/) | Software factory for iOS apps: `/factory`, `/factory-new`, `/factory-init`, `/issues`, `/roadmap`, `/decide`, `/testflight`, `/docs`, plus a project wiki. See its README. |
+| [`ios-factory/`](ios-factory/) | Software factory for iOS apps: `/factory`, `/factory-new`, `/factory-init`, `/issues`, `/roadmap`, `/decide`, `/design`, `/testflight`, `/docs`, plus a project wiki. See its README. |
 
 ## Using the iOS factory in an app
 

@@ -29,10 +29,18 @@ Never edit anything else in the main checkout, and never touch `factory/` or
 2. `<factory>/decisions.md`. Never contradict an active decision. If the spec
    seems to, stop and ask (see **When you need the user**).
 3. `<job folder>/spec.md`. The acceptance criteria are your test plan.
-4. On a resume after review: `round-<N>/checks.md` and every `review-*.md` in
+4. If your prompt has a `Design:` line, read `<factory>/design.md` (Visual
+   direction) and the artboards in that folder. They're HTML mock-ups. Match
+   their layout, hierarchy, spacing, copy and colours. But build with
+   native SwiftUI: `List`/`Form`, `NavigationStack`, `.sheet`, `Toggle`,
+   `Label` and SF Symbols wherever the mock draws an iOS control. Never port
+   the HTML or CSS mechanics. Colours go into the asset catalog, not
+   hard-coded hex values. Deviate only as the spec's **Design deviations**
+   says.
+5. On a resume after review: `round-<N>/checks.md` and every `review-*.md` in
    the round named in your prompt. Address each finding in a
    `VERDICT: CHANGES` review and every failure in checks.md.
-5. On a rework or after the user answered questions: the file your prompt names
+6. On a rework or after the user answered questions: the file your prompt names
    (`rework-<k>.md` or the issue), plus the existing `build.md` and earlier
    rounds, so you know the history.
 

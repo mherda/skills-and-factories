@@ -39,6 +39,7 @@ request ─► spec-writer ─► builder ─► CHECKS ─► [code, privacy, u
 | `/decide <rule>` | Record a standing decision every agent follows (`/decide` lists them) |
 | `/roadmap` | Milestones with progress bars: done, in progress, waiting on you, to do |
 | `/roadmap add / move / park / import PLAN.md / sync / open` | Shape the roadmap |
+| `/design` | Prototype screens as a Claude Design canvas (`new`, `add <screen>`, `revise`, `approve`, `open`). Jobs build to the approved artboards, and the UX reviewer compares screenshots with them |
 | `/testflight` | Pre-flight checklist → upload (only after you confirm) → release notes, tag, roadmap |
 | `/docs status` | Wiki health: lint, code coverage, stale pages |
 | `/docs sync [<commit\|range>]` | Update the wiki for code you changed yourself (stale pages, or a given commit or range) |
@@ -163,6 +164,12 @@ claude                              # then: /factory-new
   You answer each suggestion with yes, yes with changes, later, or no.
   Nothing you don't approve gets into the plan. Pass `--as-is` to skip this
   step.
+- **Optionally, it prototypes the screens.** It draws the core loop's screens
+  as a Claude Design canvas on claude.ai, one iPhone artboard per screen,
+  private until you share it.
+  - Comment on the canvas or give notes; `/design revise` applies them.
+  - When you approve, the screen list and visual direction shape the
+    roadmap and the decisions.
 - Then the `app-planner` agent drafts `factory/product.md`, `decisions.md`,
   `roadmap.md` (an MVP milestone, later ones, and a parked list) and the
   config.
@@ -208,6 +215,32 @@ No idea file? Run `/factory-new` and describe the app when it asks.
      { "type": "command", "command": "python3 -I \"$CLAUDE_PROJECT_DIR/factory/scripts/tracker.py\" inbox --brief" }
    ] } ] } }
    ```
+
+### Design prototypes
+
+`/design new` draws the app's screens on a **Claude Design canvas**: one
+390×844 iPhone artboard per screen, in the app's tone, with real copy. It
+works in an existing app too, starting from its current screenshots.
+`factory/design.md` is the factory's side of it: the link, the visual
+direction in words, and one row per screen:
+
+```
+| Screen | Artboard        | Status   | Roadmap                 | Notes |
+| home   | Main.dc.html    | approved | Home: habit list (home) | …     |
+```
+
+Rows go draft → approved → built. Agents can't open the canvas, so when a job
+starts, the orchestrator downloads the artboards for its roadmap item into
+`<job folder>/design/`:
+- the spec-writer writes acceptance criteria against them, and lists any
+  **Design deviations**;
+- the builder matches layout, copy and colours with native SwiftUI;
+- the UX reviewer compares the simulator screenshots with the artboards.
+
+On merge, rows become `built`, and from then on the app's screenshots are
+the reference. `/design add <screen>` draws the next screen before the
+roadmap gets there. `/design approve` offers the firm rules (for example "one
+accent colour") as decisions.
 
 ### Screens: how agents see your UI
 

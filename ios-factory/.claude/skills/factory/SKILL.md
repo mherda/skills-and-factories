@@ -93,7 +93,18 @@ Keep the user posted with one short line per transition, for example
    `$S/xc.sh setup <job-id>`, which copies gitignored files and runs the
    project generator. If either fails, go to **Needs input** with the error as
    the question ("How do I fix the worktree setup?").
-5. **Spec.** Spawn `spec-writer` with
+5. **Design.** If `factory/design.md` has a prototype link, find the rows in
+   its Screens table whose Roadmap matches this item, or whose screen the
+   request names, with status `draft` or `approved`.
+   - For each row, download the artboard with `Artifact`: `action: "read"`,
+     the link as `url`, and `path: "project/<artboard>"`. Copy the saved file
+     to `<job folder>/design/<artboard>`.
+   - Add `Design: <job folder>/design/ (<screen names>)` to every agent
+     prompt for this job (spec-writer, builder, reviewer-ux).
+   - If a row is still `draft`, tell the user in one line that the job
+     builds to an unapproved design.
+   - If there are no matching rows, or no prototype, skip this step.
+6. **Spec.** Spawn `spec-writer` with
    `<paths> Request: <feature verbatim>` (or `Request: issue <repo>/factory/issues/<file>`).
    When it finishes, read the first line of `spec.md`:
    - `STATUS: NEEDS-INPUT`: go to **Needs input** with `blocked_at=spec`.
@@ -148,7 +159,8 @@ Read the first line of `build.md`:
 
 1. `jobstate.py set <job-id> stage=review 'reviews={"code":"pending","privacy":"pending","ux":"pending","release":"pending"}'`.
 2. Spawn all four reviewers **in one message**, so they run in parallel, each
-   with `<paths> Review round N.`
+   with `<paths> Review round N.` (plus the job's `Design:` line, if it has
+   one).
 3. **Wait for all four.** As each finishes, read the first line of its
    `round-N/review-<lens>.md` and record it straight away
    (`jobstate.py set <job-id> reviews.<lens>=PASS`), so the dashboard fills in
@@ -230,8 +242,10 @@ clean. Don't make an issue for this.
      `- <spec title> · job <job-id>: <build.md "What to test", one line>`. For
      each ship note in `decision.md` (other than "None."), add an indented line
      `  - ⚠ <ship note>`.
+   - Design: if the job had `<job folder>/design/`, set those screens' rows in
+     `factory/design.md` to `built`.
    - Commit them:
-     `git add factory/roadmap.md factory/releases.md factory/issues factory/decisions.md && git commit -m "factory: <job-id> merged"`.
+     `git add factory/roadmap.md factory/releases.md factory/issues factory/decisions.md factory/design.md && git commit -m "factory: <job-id> merged"`.
      Skip the commit if nothing is staged.
 4. **Clean up.** `git worktree remove <worktree>`,
    `git branch -d factory/<job-id>`, `$S/xc.sh cleanup <job-id>`. If removing
@@ -271,7 +285,7 @@ to `[~]`, and `resumes=0`. Then continue from `blocked_at`:
 
 - `spec`: spawn `spec-writer` with
   `<paths> Resume: the user answered your questions in <issue path> under ## Answers. Rewrite spec.md.`
-  Continue at step 5 of **/factory <feature>**.
+  Continue at step 6 of **/factory <feature>** (reading its status).
 - `build`, `check` or `review`: set `stage=build`, resume the builder with
   `The user answered the questions in <issue path> under ## Answers. Continue the job and update build.md for round N+1.`
   Go to **Build check**.

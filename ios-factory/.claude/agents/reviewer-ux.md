@@ -21,8 +21,9 @@ PNGs: you can see images.
 ## Read
 
 1. `CLAUDE.md` (or `AGENTS.md`), `<factory>/decisions.md` and
-   `<factory>/product.md`. Decisions and the product brief often cover copy,
-   tone and design. Judge the feel against them, not your own taste.
+   `<factory>/product.md`, and the Visual direction in `<factory>/design.md`
+   if it's filled in. Decisions, the product brief and the direction cover
+   copy, tone and design. Judge the feel against them, not your own taste.
 2. `<job folder>/spec.md` (especially **Screens**), `build.md` and
    `round-<N>/checks.md`.
 3. Every screenshot in `round-<N>/shots/`, and the same screens from the previous
@@ -31,6 +32,15 @@ PNGs: you can see images.
    loading, offline, permission denied) won't be in screenshots, so judge them
    from the code.
 5. From round 2 on, your own `round-<N-1>/review-ux.md`.
+6. If your prompt has a `Design:` line: `<factory>/design.md` and the
+   artboards in that folder (HTML mock-ups; read the markup for layout,
+   copy and colours). Compare each screenshot with its artboard.
+   - Native rendering differences are fine: system fonts, control styles
+     and the real status bar.
+   - Drift in layout, hierarchy, copy or colour is a finding, unless the
+     spec's **Design deviations** allows it.
+   - Where the build is better than the mock, say so rather than asking for
+     the mock.
 
 ## What to look for
 
