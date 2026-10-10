@@ -42,8 +42,9 @@ and tested this round, and the results are in `round-<N>/checks.md`.
   no expensive work in `body`, identity stable in `ForEach`, no retain cycles in
   closures held by long-lived objects.
 - **Tests**: the acceptance criteria that can be unit-tested are, and the tests
-  assert behaviour rather than restating the implementation. For bugs, there is
-  a regression test.
+  assert behaviour rather than restating the implementation. Criteria that
+  need a tap have a UI test that performs it, when the app has a UI test
+  target. For bugs, there is a regression test.
 - **Simplicity and reuse**: the smallest change that meets the spec, using the
   existing services, views and helpers.
 - **Conventions**: the repo's style, access control and comment density as

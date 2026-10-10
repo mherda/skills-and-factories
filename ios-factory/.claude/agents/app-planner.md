@@ -110,7 +110,8 @@ tell them apart.
        how (CloudKit private database). Then no unique constraints, and
        every model change is a schema deploy before TestFlight.
      - Swift Testing for unit tests, with an injected in-memory container and
-       temp files. Tests are added with each feature.
+       temp files. XCUITest (the `<app>UITests` target) for behaviour that
+       needs a tap. Tests are added with each feature.
      - Dependencies: none by default. Ask the user before adding any Swift
        package, and pin packages exactly.
      - A permission is requested only when the feature needs it, with a

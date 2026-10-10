@@ -33,6 +33,10 @@ APPROVE only if all of these hold:
 
 - Every acceptance criterion is met, with evidence you find convincing.
   Spot-check at least one yourself (read the test, or look at the screenshot).
+  A screenshot of the starting screen is no evidence for what a tap does:
+  that needs a UI test. Criteria in build.md's **Not verified (needs a tap)**
+  are a known gap. Escalate if one is behaviour users will notice; otherwise
+  name each in Ship notes.
 - The final round's `checks.md` starts `CHECKS: PASS` and all four reviews are
   `VERDICT: PASS`, with no Note that describes a real problem.
 - `git merge-tree --write-tree main <branch>` reports no conflicts.

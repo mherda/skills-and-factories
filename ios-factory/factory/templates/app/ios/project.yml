@@ -27,6 +27,7 @@ targets:
     scheme:
       testTargets:
         - {{APP}}Tests
+        - {{APP}}UITests
     info:
       path: {{APP}}/Info.plist
       properties:
@@ -64,3 +65,17 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: {{BUNDLE_ID}}Tests
         TARGETED_DEVICE_FAMILY: "{{DEVICE_FAMILY}}"
+  # Acceptance criteria that need a tap are proven here (XCUITest).
+  {{APP}}UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: {{APP}}UITests
+    dependencies:
+      - target: {{APP}}
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: {{BUNDLE_ID}}UITests
+        TARGETED_DEVICE_FAMILY: "{{DEVICE_FAMILY}}"
+        TEST_TARGET_NAME: {{APP}}

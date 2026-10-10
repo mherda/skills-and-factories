@@ -89,6 +89,15 @@ Verify every criterion and record the evidence in build.md: the test that
 proves it, or what the screenshot showed (Read the PNG to see it yourself).
 Tests must pass, and the app must build with no new warnings.
 
+`xc.sh` can't tap, and a screenshot of the starting screen doesn't prove what
+a tap does. For each criterion that needs one (tap a button, go back, dismiss
+an alert, play to the end), write or extend an XCUITest in the app's UI test
+target that performs the taps and asserts the result, and cite it as the
+evidence. Launch it with `-factoryNoPrompts` and any other hooks it needs.
+If the app has no UI test target, don't add one (that changes the project).
+List the criterion under **Not verified (needs a tap)** in build.md instead
+of ticking it.
+
 ## Commit
 
 - One commit per distinct piece of work, short one-line messages in the style
@@ -131,6 +140,10 @@ What the branch does now, in a few lines, and the files changed.
 
 ## Acceptance criteria
 1. [x] <criterion>: <evidence>
+
+## Not verified (needs a tap)
+Only when the app has no UI test target: each criterion you couldn't prove,
+and what you checked instead (code, the starting screen). Otherwise omit.
 
 ## Validation
 The xc.sh commands you ran and their results.

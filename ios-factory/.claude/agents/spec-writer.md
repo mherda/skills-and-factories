@@ -120,6 +120,9 @@ Numbered. Each is one observable behaviour plus how to verify it:
   launch argument or deep link (see CLAUDE.md "Screens") and what it shows, or
 - a file that must contain something.
 Every item must be checkable by someone who only has the repo and a simulator.
+The simulator can't be tapped, so a criterion that needs a tap ("tap X, then
+Y happens") is proven by a UI test: name the UI test target and what it
+asserts. If the app has no UI test target, mark the criterion "(needs a tap)".
 
 ## Screens
 One line per screen the reviewers should capture, in the format

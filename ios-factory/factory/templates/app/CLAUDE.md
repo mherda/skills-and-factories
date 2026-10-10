@@ -30,14 +30,19 @@ The `.xcodeproj` is generated and gitignored. Edit `ios/project.yml`, never
 its D-id, e.g. "- Services are `@MainActor @Observable final class` (D-004)." -->
 - Strict concurrency is on: framework callbacks on background queues must hop
   to main explicitly.
-- Tests: Swift Testing in `ios/{{APP}}Tests/`.
+- Tests: Swift Testing in `ios/{{APP}}Tests/`. Behaviour that needs a tap
+  ("tap X, then Y happens") gets an XCUITest in `ios/{{APP}}UITests/`,
+  launched with `-factoryNoPrompts`.
 - A permission request checks `FactoryLaunch.noPrompts` first, and its purpose
   string goes in `ios/project.yml`.
 
 ## Screens
 Debug-only hooks in `App/FactoryLaunch.swift`, handled in
 `Views/ContentView.swift`. Every new screen worth a screenshot gets a case
-there, a row here and an entry in `SCREENS` in `factory/config.sh`.
+there, a row here and an entry in `SCREENS` in `factory/config.sh`. Flags
+with no value (`-factoryNoPrompts`) are read from
+`ProcessInfo.processInfo.arguments`, not UserDefaults. A hook that writes or
+clears stored data runs in the App's `init()`, before any view reads it.
 
 | Launch argument | Effect |
 |---|---|

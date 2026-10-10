@@ -398,7 +398,10 @@ What the template gives every app:
 - `FactoryLaunch` (`-factoryScreen`, `-factoryNoPrompts`), so the UX reviewer
   can see screens from the first job;
 - a privacy manifest;
-- `AppInfo` with a real test.
+- `AppInfo` with a real test;
+- a UI test target with one tap flow (`FlowTests`), so acceptance criteria
+  that need a tap have a home from the first job. It runs in the scheme's
+  tests, so `xc.sh check` repeats it every round.
 
 Purpose strings and entitlements are left to the job that needs them.
 

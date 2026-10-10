@@ -256,13 +256,23 @@ reachable directly:
   ```swift
   #if DEBUG
   // Factory/UI-review hook: -factoryScreen <name> opens a screen directly.
+  // "-key value" arguments land in UserDefaults; bare flags don't, so read those from the arguments.
   if let screen = UserDefaults.standard.string(forKey: "factoryScreen") { router.open(debugScreen: screen) }
+  let noPrompts = ProcessInfo.processInfo.arguments.contains("-factoryNoPrompts")
   #endif
   ```
+  A hook that writes or clears stored data (e.g. `-factoryClearSave`) must
+  run before the first view reads it: in the App's `init()`, not the root
+  view.
 - **Deep links** (`url:myapp://area/42`) if the app already has them.
-- **UI tests** for flows that need taps: set `UI_TEST_SCREENS` to a test class
-  that attaches screenshots (`XCTAttachment`, `.keepAlways`). They're exported
-  into the round's `shots/` folder.
+- **UI tests** for flows that need taps. Acceptance criteria like "tap X,
+  then Y happens" are proven by an XCUITest the builder writes; it runs in
+  every round's `xc.sh check`. Apps from `/factory-new` get a UI test target
+  from the start. In an app without one, the builder lists those criteria
+  under "Not verified (needs a tap)" and the approver treats them as a known
+  gap. For screenshots, set `UI_TEST_SCREENS` to a test class that attaches
+  them (`XCTAttachment`, `.keepAlways`). They're exported into the round's
+  `shots/` folder.
 
 **Permission alerts.** `SIM_PRIVACY_GRANTS` pre-grants most permissions,
 but on current iOS simulators **location can't be granted from `simctl`**: the
@@ -315,8 +325,8 @@ has the fix.
 ## Limits and choices
 
 - **Agents can't tap.** Visual review covers what launch arguments, deep links
-  and UI tests can reach. Flows only reachable by tapping get judged from code
-  until you add a hook or a UI test.
+  and UI tests can reach. Behaviour behind a tap is proven by UI tests; without
+  a UI test target it's judged from code and reported as not verified.
 - **Simulator service hangs.** If `xc.sh` reports "simctl create timed out",
   CoreSimulatorService is stuck (usually a device frozen in "Shutting Down").
   `killall -9 com.apple.CoreSimulator.CoreSimulatorService` fixes it, but
