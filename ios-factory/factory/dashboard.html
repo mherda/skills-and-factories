@@ -60,6 +60,7 @@ main { padding: 16px; }
 .ms li .mark { width: 18px; text-align: center; flex: none; }
 .ms li.done .text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
 .ms li.parked { opacity: .55; }
+.parked-n { color: var(--muted); font-weight: 400; white-space: nowrap; }
 .ms li .refs { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .mark.done { color: var(--pass); } .mark.doing { color: var(--accent); } .mark.needs-input { color: var(--you); font-weight: 700; } .mark.todo, .mark.parked { color: var(--pend); }
 /* lists */
@@ -298,10 +299,12 @@ async function viewRoadmap() {
   if (!src) return '<p class="empty">No <code>roadmap.md</code> yet.</p>'
   const ms = parseRoadmap(src), all = ms.flatMap((m) => m.items)
   const live = all.filter((i) => i.status !== 'parked'), done = live.filter((i) => i.status === 'done').length
-  return `<div class="overall">${bar(all)}<b>${done}/${live.length}</b><span class="hint" style="margin:0">● done · ◐ in progress · ? needs you · ○ to do · – parked</span></div>
+  // Parked items are left out of the count; say how many, so "9/9" next to a parked row doesn't read as a miscount.
+  const parkedNote = (items) => { const p = items.length - items.filter((i) => i.status !== 'parked').length; return p ? `<span class="parked-n">· ${p} parked</span>` : '' }
+  return `<div class="overall">${bar(all)}<b>${done}/${live.length}</b>${parkedNote(all)}<span class="hint" style="margin:0">● done · ◐ in progress · ? needs you · ○ to do · – parked</span></div>
   ${ms.map((m) => {
     const l = m.items.filter((i) => i.status !== 'parked'), d = l.filter((i) => i.status === 'done').length
-    return `<section class="ms"><div class="ms-head"><h3>${esc(m.title)}</h3><span style="display:flex;gap:10px;align-items:center;min-width:220px">${bar(m.items)}<b>${d}/${l.length}</b></span></div>
+    return `<section class="ms"><div class="ms-head"><h3>${esc(m.title)}</h3><span style="display:flex;gap:10px;align-items:center;min-width:220px">${bar(m.items)}<b>${d}/${l.length}</b>${parkedNote(m.items)}</span></div>
       ${m.goal ? `<p class="goal">${esc(m.goal)}</p>` : ''}
       <ul>${m.items.map((i) => `<li class="${i.status}"><span class="mark ${i.status}">${ICON[i.status]}</span><span class="text">${inline(i.text)}</span><span class="refs">${i.refs.map(refChip).join('')}</span></li>`).join('')}</ul></section>`
   }).join('')}`
