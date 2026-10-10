@@ -14,6 +14,7 @@ job's history.
 import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 
@@ -65,12 +66,39 @@ def get_dotted(obj, key):
     return obj
 
 
+def git_lines(*args):
+    try:
+        out = subprocess.run(["git", "-C", REPO, *args], capture_output=True, text=True)
+    except OSError:
+        return []
+    return out.stdout.splitlines() if out.returncode == 0 else []
+
+
+def used_numbers():
+    """Job numbers already used anywhere. factory/jobs/ is gitignored, so a fresh
+    clone has none there: also count job branches, merge commits and the
+    "job NNN" refs in the roadmap, releases and issues."""
+    nums = {int(d[:3]) for d in os.listdir(JOBS) if re.match(r"^\d{3}-", d)}
+    text = git_lines("for-each-ref", "--format=%(refname:short)", "refs/heads/factory/", "refs/remotes/")
+    text += git_lines("log", "--all", "--merges", "--format=%s")
+    for rel in ("roadmap.md", "releases.md", "issues"):
+        p = os.path.join(REPO, "factory", rel)
+        files = [os.path.join(p, f) for f in os.listdir(p)] if os.path.isdir(p) else [p]
+        for f in files:
+            if os.path.isfile(f):
+                with open(f, errors="replace") as fh:
+                    text += fh.read().splitlines()
+    for line in text:
+        nums.update(int(n) for n in re.findall(r"factory/(\d{3})-", line))
+        nums.update(int(n) for n in re.findall(r"\bjob:?\s+(\d{3})\b", line))
+    return nums
+
+
 def claim(slug):
     os.makedirs(JOBS, exist_ok=True)
     slug = re.sub(r"[^a-z0-9-]+", "-", slug.lower()).strip("-")
     while True:
-        nums = [int(d[:3]) for d in os.listdir(JOBS) if re.match(r"^\d{3}-", d)]
-        job_id = f"{max(nums, default=0) + 1:03d}-{slug}"
+        job_id = f"{max(used_numbers(), default=0) + 1:03d}-{slug}"
         try:
             os.mkdir(os.path.join(JOBS, job_id))  # fails if another session took it
             return job_id
