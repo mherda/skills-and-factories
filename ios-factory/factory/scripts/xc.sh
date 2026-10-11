@@ -141,6 +141,9 @@ cmd_test() {
   # Absolute: xcodebuild runs from PROJECT_DIR, so a relative result path would land there.
   mkdir -p "$out" && out="$(cd "$out" && pwd)"
   rm -rf "$out/tests.xcresult"
+  # Regenerate the project first, as cmd_build does: after a merge adds files,
+  # a stale project fails with phantom "Cannot find type" errors.
+  cmd_setup "$job" >/dev/null
   local args=(test -resultBundlePath "$out/tests.xcresult")
   if [[ $# -eq 0 && -n $UI_TEST_SCREENS ]]; then args+=("-skip-testing:$UI_TEST_SCREENS"); fi
   local status=0
