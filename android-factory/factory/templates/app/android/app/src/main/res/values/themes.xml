@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window theme only; Compose draws everything with ui/theme/Theme.kt. -->
+    <style name="Theme.{{APP}}" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

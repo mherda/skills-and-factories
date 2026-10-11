@@ -1,0 +1,22 @@
+.DS_Store
+.claude/settings.local.json
+# Gradle and Android Studio output. The wrapper (gradlew, gradle/wrapper/) is committed.
+.gradle/
+.kotlin/
+build/
+captures/
+.idea/
+*.iml
+.externalNativeBuild/
+.cxx/
+# Machine-specific: sdk.dir. droid.sh copies it into job worktrees.
+local.properties
+# Signing keys and Play service-account keys never go in the repo.
+*.jks
+*.keystore
+*.p12
+*.aab
+*.apk
+play-service-account*.json
+/factory/jobs/
+/build/

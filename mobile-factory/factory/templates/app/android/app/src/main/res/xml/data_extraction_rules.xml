@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What Android backs up to the user's Google account (API 31+) and moves to a
+     new phone. Exclude secrets, tokens and anything device-specific as features
+     add them. -->
+<data-extraction-rules>
+    <cloud-backup />
+    <device-transfer />
+</data-extraction-rules>

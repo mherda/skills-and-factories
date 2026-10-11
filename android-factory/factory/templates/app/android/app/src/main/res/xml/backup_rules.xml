@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup rules for API 30 and below. Keep in step with
+     data_extraction_rules.xml. -->
+<full-backup-content />

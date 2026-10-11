@@ -1,0 +1,35 @@
+.DS_Store
+.claude/settings.local.json
+# iOS: the project is generated from ios/project.yml by XcodeGen. Don't commit it.
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+*.xcresult
+*.xcarchive
+*.ipa
+*.dSYM.zip
+*.p8
+*.mobileprovision
+# Android: Gradle and Android Studio output. The wrapper (gradlew, gradle/wrapper/) is committed.
+.gradle/
+.kotlin/
+build/
+captures/
+.idea/
+*.iml
+.externalNativeBuild/
+.cxx/
+# Machine-specific: sdk.dir. droid.sh copies it into job worktrees.
+local.properties
+# Signing keys and store keys never go in the repo.
+*.jks
+*.keystore
+*.p12
+*.aab
+*.apk
+play-service-account*.json
+/factory/jobs/
+/build/
