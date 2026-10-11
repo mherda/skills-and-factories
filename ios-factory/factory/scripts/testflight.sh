@@ -3,7 +3,7 @@
 # PROJECT_DIR as the working directory and BUILD_NUMBER set.
 #
 # Signing: either your Apple ID in Xcode (Settings → Accounts), or an App Store
-# Connect API key (Users and Access → Integrations → Keys, role "App Manager").
+# Connect API key (Users and Access → Integrations → Team Keys, role "Admin": cloud-managed distribution signing needs Admin).
 # Keep the .p8 outside the repo and export:
 #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH
 set -euo pipefail
